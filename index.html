@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Job Application Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>\ud83d\udcbc</text></svg>" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #f6f5f3;
+    --surface: #ffffff;
+    --surface-2: #fbfaf8;
+    --border: #e4e1db;
+    --border-strong: #d3cfc6;
+    --text: #1f1c18;
+    --text-muted: #6b665c;
+    --accent: #b5502f;
+    --accent-soft: #f1e3dc;
+    --focus: #8a7355;
+    --shadow: 0 1px 2px rgba(20,16,10,0.06), 0 6px 20px rgba(20,16,10,0.06);
+    --radius: 14px;
+
+    --applied: #6b7d8f;
+    --applied-bg: #e8edf1;
+    --screening: #9a7b2f;
+    --screening-bg: #f3ecd7;
+    --interview: #3d7a5c;
+    --interview-bg: #e2efe8;
+    --offer: #2f7d3f;
+    --offer-bg: #e2f0e4;
+    --rejected: #a24444;
+    --rejected-bg: #f4e2e2;
+    --withdrawn: #7a7468;
+    --withdrawn-bg: #ebe9e4;
+
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17140f;
+      --surface: #211d17;
+      --surface-2: #262119;
+      --border: #38322a;
+      --border-strong: #4a4235;
+      --text: #ece7dd;
+      --text-muted: #a89f8e;
+      --accent: #e2895f;
+      --accent-soft: #3a2a22;
+      --focus: #c9ad84;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+
+      --applied: #9db6c9;
+      --applied-bg: #23303a;
+      --screening: #d8bd6c;
+      --screening-bg: #3a331d;
+      --interview: #8fceac;
+      --interview-bg: #1f3229;
+      --offer: #8fdb9a;
+      --offer-bg: #1c3220;
+      --rejected: #e29a9a;
+      --rejected-bg: #3a2222;
+      --withdrawn: #b8b1a3;
+      --withdrawn-bg: #2c2820;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17140f; --surface: #211d17; --surface-2: #262119; --border: #38322a;
+    --border-strong: #4a4235; --text: #ece7dd; --text-muted: #a89f8e;
+    --accent: #e2895f; --accent-soft: #3a2a22; --focus: #c9ad84;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    --applied: #9db6c9; --applied-bg: #23303a; --screening: #d8bd6c; --screening-bg: #3a331d;
+    --interview: #8fceac; --interview-bg: #1f3229; --offer: #8fdb9a; --offer-bg: #1c3220;
+    --rejected: #e29a9a; --rejected-bg: #3a2222; --withdrawn: #b8b1a3; --withdrawn-bg: #2c2820;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  header.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--text-muted); font-size: 13.5px; margin: 4px 0 22px; }
+
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 22px; }
+  @media (max-width: 720px) { .stats { grid-template-columns: repeat(3, 1fr); } }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px 12px; text-align: center; cursor: pointer; transition: border-color .15s, transform .1s;
+  }
+  .stat:hover { border-color: var(--border-strong); }
+  .stat.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .stat .n { font-size: 20px; font-weight: 650; }
+  .stat .l { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .03em; }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  select, input[type="text"], input[type="date"], input[type="url"], textarea {
+    font: inherit; font-size: 14px; color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; outline: none;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+  .toolbar select { min-width: 140px; }
+  .spacer { flex: 1; }
+
+  button { font: inherit; cursor: pointer; border-radius: 9px; border: 1px solid transparent; padding: 8px 14px; font-size: 14px; font-weight: 550; transition: opacity .15s, background .15s; }
+  button:active { opacity: .8; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: none; padding: 6px 8px; }
+  .btn-ghost:hover { color: var(--text); }
+  .btn-danger { color: var(--rejected); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .table-scroll { overflow-x: auto; border-radius: var(--radius); }
+  thead th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted);
+    padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface-2); white-space: nowrap;
+  }
+  tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  .company { font-weight: 600; }
+  .role { color: var(--text-muted); font-size: 13px; margin-top: 1px; }
+  .muted { color: var(--text-muted); }
+  .nowrap { white-space: nowrap; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  select.status-select { border: none; font: inherit; font-size: 12px; font-weight: 600; padding: 4px 8px 4px 9px; border-radius: 999px; appearance: none; -webkit-appearance: none; cursor: pointer; }
+
+  .row-actions { display: flex; gap: 2px; }
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty .big { font-size: 32px; margin-bottom: 8px; }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(15,12,8,0.45); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; z-index: 50; }
+  .modal { background: var(--surface); border-radius: 16px; padding: 22px; width: 100%; max-width: 520px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .modal h2 { margin: 0 0 16px; font-size: 17px; }
+  .field { margin-bottom: 13px; display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
+  .field input, .field select, .field textarea { width: 100%; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  textarea { resize: vertical; min-height: 56px; font-family: inherit; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+  .link-icon { color: var(--accent); text-decoration: none; font-size: 13px; }
+  .link-icon:hover { text-decoration: underline; }
+  footer.note { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 24px; }
+
+  .auth-gate { min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 380px; box-shadow: var(--shadow); text-align: center; }
+  .auth-card .big { font-size: 30px; margin-bottom: 6px; }
+  .auth-card h2 { margin: 0 0 6px; font-size: 18px; }
+  .auth-card p { color: var(--text-muted); font-size: 13.5px; margin: 0 0 18px; }
+  .auth-card input { width: 100%; margin-bottom: 10px; text-align: center; }
+  .auth-card button { width: 100%; }
+  .auth-status { font-size: 13px; margin-top: 12px; color: var(--text-muted); min-height: 18px; }
+  .whoami { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+  .whoami button { padding: 4px 10px; font-size: 12.5px; }
+  #appRoot { display: none; }
+</style>
+</head>
+<body>
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="big">\ud83d\udcbc</div>
+    <h2>Job Application Tracker</h2>
+    <p>Sign in with your email to access your data from any device.</p>
+    <input type="text" id="authEmail" placeholder="you@example.com" autocomplete="email" />
+    <button class="btn-primary" id="authSendBtn" type="button">Send magic link</button>
+    <div class="auth-status" id="authStatus"></div>
+  </div>
+</div>
+
+<div class="wrap" id="appRoot">
+  <header class="top">
+    <h1>\ud83d\udcbc Job Application Tracker</h1>
+    <div>
+      <button class="btn-secondary" id="importBtn" type="button">Import CSV</button>
+      <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;" />
+      <button class="btn-secondary" id="exportBtn" type="button">Export CSV</button>
+      <button class="btn-primary" id="addBtn" type="button">+ Add Application</button>
+    </div>
+  </header>
+  <div class="whoami" style="margin-bottom:18px;">
+    <span>\u2601\ufe0f Signed in as <strong id="whoamiEmail"></strong></span>
+    <button class="btn-ghost" id="signOutBtn" type="button">Sign out</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="toolbar">
+    <select id="filterRegion">
+      <option value="">All regions</option>
+      <option>Germany</option>
+      <option>China</option>
+      <option>Hong Kong</option>
+      <option>Singapore</option>
+      <option>Other</option>
+    </select>
+    <select id="sortBy">
+      <option value="dateDesc">Newest first</option>
+      <option value="dateAsc">Oldest first</option>
+      <option value="company">Company A\u2013Z</option>
+      <option value="nextAction">Next action date</option>
+    </select>
+    <div class="spacer"></div>
+    <span class="muted" id="countLabel" style="font-size:13px;"></span>
+  </div>
+
+  <div class="table-scroll">
+    <table id="table">
+      <thead>
+        <tr>
+          <th>Company / Role</th>
+          <th>Region</th>
+          <th>Applied</th>
+          <th>Status</th>
+          <th>Next action</th>
+          <th>Link</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">
+      <div class="big">\ud83d\udcec</div>
+      <span class="empty-text">No applications yet \u2014 click \u201c+ Add Application\u201d to log your first one.</span>
+    </div>
+  </div>
+
+  <footer class="note">Your data is stored in your own Supabase database, protected by row-level security tied to your account.</footer>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" style="display:none;">
+  <div class="modal">
+    <h2 id="modalTitle">Add Application</h2>
+    <div class="field">
+      <label for="fCompany">Company</label>
+      <input type="text" id="fCompany" placeholder="e.g. SAP" />
+    </div>
+    <div class="field">
+      <label for="fRole">Role</label>
+      <input type="text" id="fRole" placeholder="e.g. Junior AI Engineer" />
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="fRegion">Region</label>
+        <select id="fRegion">
+          <option>Germany</option>
+          <option>China</option>
+          <option>Hong Kong</option>
+          <option>Singapore</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fStatus">Status</label>
+        <select id="fStatus">
+          <option>Applied</option>
+          <option>Screening</option>
+          <option>Interview</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+          <option>Withdrawn</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="fDateApplied">Date applied</label>
+        <input type="date" id="fDateApplied" />
+      </div>
+      <div class="field">
+        <label for="fNextActionDate">Next action date</label>
+        <input type="date" id="fNextActionDate" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="fNextAction">Next action</label>
+      <input type="text" id="fNextAction" placeholder="e.g. Follow up with recruiter" />
+    </div>
+    <div class="field">
+      <label for="fLink">Job posting link</label>
+      <input type="url" id="fLink" placeholder="https://..." />
+    </div>
+    <div class="field">
+      <label for="fContact">Contact / referral</label>
+      <input type="text" id="fContact" placeholder="e.g. Referred by former BMW manager" />
+    </div>
+    <div class="field">
+      <label for="fNotes">Notes</label>
+      <textarea id="fNotes" placeholder="Anything worth remembering"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn" type="button">Cancel</button>
+      <button class="btn-primary" id="saveBtn" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SUPABASE_URL = "https://dubkbibuzxclfvxieyqf.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_F7Q4ZhNQnFGBwlOUzo9N0w_UqFqDn12";
+  var TABLE = "applications";
+
+  var STATUS_META = {
+    Applied:    { color: "applied" },
+    Screening:  { color: "screening" },
+    Interview:  { color: "interview" },
+    Offer:      { color: "offer" },
+    Rejected:   { color: "rejected" },
+    Withdrawn:  { color: "withdrawn" }
+  };
+  var STATUS_ORDER = ["Applied", "Screening", "Interview", "Offer", "Rejected", "Withdrawn"];
+
+  var state = {
+    apps: [],
+    editingId: null,
+    filterStatus: "",
+    filterRegion: "",
+    sortBy: "dateDesc"
+  };
+
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var currentUser = null;
+
+  function uid() {
+    return "tmp_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ---- field-name mapping: JS camelCase <-> Postgres snake_case ----
+  function toDbRow(app) {
+    return {
+      id: app.id && app.id.indexOf("tmp_") !== 0 ? app.id : undefined, // let DB generate on insert
+      company: app.company || "",
+      role: app.role || "",
+      region: app.region || "",
+      status: app.status || "Applied",
+      date_applied: app.dateApplied || null,
+      next_action_date: app.nextActionDate || null,
+      next_action: app.nextAction || "",
+      link: app.link || "",
+      contact: app.contact || "",
+      notes: app.notes || ""
+    };
+  }
+
+  function fromDbRow(row) {
+    return {
+      id: row.id,
+      company: row.company || "",
+      role: row.role || "",
+      region: row.region || "",
+      status: row.status || "Applied",
+      dateApplied: row.date_applied || "",
+      nextActionDate: row.next_action_date || "",
+      nextAction: row.next_action || "",
+      link: row.link || "",
+      contact: row.contact || "",
+      notes: row.notes || ""
+    };
+  }
+
+  // ---- persistence: all reads/writes go straight to Supabase ----
+  async function fetchAll() {
+    var res = await sb.from(TABLE).select("*").order("date_applied", { ascending: false });
+    if (res.error) {
+      console.error("Fetch failed", res.error);
+      alert("Could not load your applications. Please refresh and try again.");
+      return;
+    }
+    state.apps = res.data.map(fromDbRow);
+    renderAll();
+  }
+
+  async function persistUpsert(app) {
+    var isNew = !app.id || app.id.indexOf("tmp_") === 0; // client-side temp ids use this prefix
+    var row = toDbRow(app);
+    if (isNew) delete row.id;
+    var res = isNew
+      ? await sb.from(TABLE).insert(row).select().single()
+      : await sb.from(TABLE).update(row).eq("id", app.id).select().single();
+    if (res.error) {
+      console.error("Save failed", res.error);
+      alert("Could not save that application. Please try again.");
+      return;
+    }
+    await fetchAll();
+  }
+
+  async function persistDelete(id) {
+    var res = await sb.from(TABLE).delete().eq("id", id);
+    if (res.error) {
+      console.error("Delete failed", res.error);
+      alert("Could not delete that entry. Please try again.");
+      return;
+    }
+    await fetchAll();
+  }
+
+  async function persistImportMany(apps) {
+    var rows = apps.map(function (a) {
+      var row = toDbRow(a);
+      delete row.id; // always insert as new rows on import
+      return row;
+    });
+    var res = await sb.from(TABLE).insert(rows);
+    if (res.error) {
+      console.error("Import failed", res.error);
+      alert("Some rows may not have imported. Please check and try again.");
+    }
+    await fetchAll();
+  }
+
+  // ---- auth ----
+  function setWhoami() {
+    var email = currentUser && currentUser.email ? currentUser.email : "";
+    document.getElementById("whoamiEmail").textContent = email;
+  }
+
+  function showApp() {
+    document.getElementById("authGate").style.display = "none";
+    document.getElementById("appRoot").style.display = "block";
+  }
+
+  function showAuthGate() {
+    document.getElementById("authGate").style.display = "flex";
+    document.getElementById("appRoot").style.display = "none";
+  }
+
+  async function handleSendMagicLink() {
+    var email = document.getElementById("authEmail").value.trim();
+    var statusEl = document.getElementById("authStatus");
+    if (!email || email.indexOf("@") === -1) {
+      statusEl.textContent = "Please enter a valid email address.";
+      return;
+    }
+    statusEl.textContent = "Sending\u2026";
+    var res = await sb.auth.signInWithOtp({
+      email: email,
+      options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    });
+    if (res.error) {
+      console.error("Magic link send failed", res.error);
+      statusEl.textContent = "Could not send the link. Please try again in a moment.";
+      return;
+    }
+    statusEl.textContent = "Check your email for a sign-in link.";
+  }
+
+  async function handleSignOut() {
+    await sb.auth.signOut();
+    currentUser = null;
+    showAuthGate();
+  }
+
+  async function initAuth() {
+    sb.auth.onAuthStateChange(function (event, session) {
+      if (session && session.user) {
+        currentUser = session.user;
+        setWhoami();
+        showApp();
+        fetchAll();
+      } else {
+        currentUser = null;
+        showAuthGate();
+      }
+    });
+
+    var res = await sb.auth.getSession();
+    if (res.data && res.data.session && res.data.session.user) {
+      currentUser = res.data.session.user;
+      setWhoami();
+      showApp();
+      fetchAll();
+    } else {
+      showAuthGate();
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "\u2014";
+    var d = new Date(iso + "T00:00:00");
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function renderStats() {
+    var counts = {};
+    STATUS_ORDER.forEach(function (s) { counts[s] = 0; });
+    state.apps.forEach(function (a) { if (counts[a.status] !== undefined) counts[a.status]++; });
+
+    var total = state.apps.length;
+    var cards = [{ key: "", label: "All", n: total }].concat(
+      STATUS_ORDER.map(function (s) { return { key: s, label: s, n: counts[s] }; })
+    );
+
+    var html = cards.map(function (c) {
+      var active = state.filterStatus === c.key ? " active" : "";
+      return '<div class="stat' + active + '" data-status="' + escapeHtml(c.key) + '">' +
+        '<div class="n">' + c.n + '</div><div class="l">' + escapeHtml(c.label) + '</div></div>';
+    }).join("");
+    document.getElementById("stats").innerHTML = html;
+
+    Array.prototype.forEach.call(document.querySelectorAll(".stat"), function (el) {
+      el.addEventListener("click", function () {
+        state.filterStatus = el.getAttribute("data-status");
+        renderAll();
+      });
+    });
+  }
+
+  function getFiltered() {
+    var list = state.apps.filter(function (a) {
+      if (state.filterStatus && a.status !== state.filterStatus) return false;
+      if (state.filterRegion && a.region !== state.filterRegion) return false;
+      return true;
+    });
+    list.sort(function (a, b) {
+      if (state.sortBy === "dateAsc") return (a.dateApplied || "").localeCompare(b.dateApplied || "");
+      if (state.sortBy === "company") return (a.company || "").localeCompare(b.company || "");
+      if (state.sortBy === "nextAction") return (a.nextActionDate || "9999").localeCompare(b.nextActionDate || "9999");
+      return (b.dateApplied || "").localeCompare(a.dateApplied || "");
+    });
+    return list;
+  }
+
+  function renderTable() {
+    var list = getFiltered();
+    var tbody = document.getElementById("tbody");
+    var empty = document.getElementById("emptyState");
+    document.getElementById("countLabel").textContent = list.length + (list.length === 1 ? " application" : " applications");
+
+    if (list.length === 0) {
+      tbody.innerHTML = "";
+      empty.style.display = "block";
+      empty.querySelector(".empty-text").textContent =
+        "No applications yet \u2014 click \u201c+ Add Application\u201d to log your first one.";
+      return;
+    }
+    empty.style.display = "none";
+
+    tbody.innerHTML = list.map(function (a) {
+      var meta = STATUS_META[a.status] || STATUS_META.Applied;
+      var statusOptions = STATUS_ORDER.map(function (s) {
+        return '<option value="' + s + '"' + (s === a.status ? " selected" : "") + '>' + s + "</option>";
+      }).join("");
+      var linkCell = a.link
+        ? '<a class="link-icon" href="' + escapeHtml(a.link) + '" target="_blank" rel="noopener noreferrer">Open \u2197</a>'
+        : '<span class="muted">\u2014</span>';
+      var nextAction = a.nextAction || a.nextActionDate
+        ? escapeHtml(a.nextAction || "") + (a.nextActionDate ? '<div class="role">' + fmtDate(a.nextActionDate) + "</div>" : "")
+        : '<span class="muted">\u2014</span>';
+
+      return '<tr data-id="' + a.id + '">' +
+        '<td><div class="company">' + escapeHtml(a.company) + '</div><div class="role">' + escapeHtml(a.role) + '</div></td>' +
+        '<td class="nowrap">' + escapeHtml(a.region) + '</td>' +
+        '<td class="nowrap">' + fmtDate(a.dateApplied) + '</td>' +
+        '<td><select class="status-select" style="background:var(--' + meta.color + '-bg);color:var(--' + meta.color + ')" data-id="' + a.id + '">' + statusOptions + '</select></td>' +
+        '<td>' + nextAction + '</td>' +
+        '<td class="nowrap">' + linkCell + '</td>' +
+        '<td class="row-actions nowrap">' +
+          '<button class="btn-ghost" data-edit="' + a.id + '" title="Edit" type="button">\u270e</button>' +
+          '<button class="btn-ghost btn-danger" data-del="' + a.id + '" title="Delete" type="button">\u2715</button>' +
+        '</td>' +
+      '</tr>';
+    }).join("");
+
+    Array.prototype.forEach.call(tbody.querySelectorAll(".status-select"), function (sel) {
+      sel.addEventListener("change", function () {
+        var id = sel.getAttribute("data-id");
+        var app = state.apps.find(function (x) { return x.id === id; });
+        if (app) {
+          var updated = Object.assign({}, app, { status: sel.value });
+          persistUpsert(updated);
+        }
+      });
+    });
+    Array.prototype.forEach.call(tbody.querySelectorAll("[data-edit]"), function (btn) {
+      btn.addEventListener("click", function () { openModal(btn.getAttribute("data-edit")); });
+    });
+    Array.prototype.forEach.call(tbody.querySelectorAll("[data-del]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-del");
+        var app = state.apps.find(function (x) { return x.id === id; });
+        if (app && confirm('Delete the application for "' + app.company + '"?')) {
+          persistDelete(id);
+        }
+      });
+    });
+  }
+
+  function renderAll() {
+    renderStats();
+    renderTable();
+  }
+
+  function openModal(id) {
+    state.editingId = id || null;
+    var app = id ? state.apps.find(function (x) { return x.id === id; }) : null;
+
+    document.getElementById("modalTitle").textContent = app ? "Edit Application" : "Add Application";
+    document.getElementById("fCompany").value = app ? app.company : "";
+    document.getElementById("fRole").value = app ? app.role : "";
+    document.getElementById("fRegion").value = app ? app.region : "Germany";
+    document.getElementById("fStatus").value = app ? app.status : "Applied";
+    document.getElementById("fDateApplied").value = app ? app.dateApplied : new Date().toISOString().slice(0, 10);
+    document.getElementById("fNextActionDate").value = app ? (app.nextActionDate || "") : "";
+    document.getElementById("fNextAction").value = app ? (app.nextAction || "") : "";
+    document.getElementById("fLink").value = app ? (app.link || "") : "";
+    document.getElementById("fContact").value = app ? (app.contact || "") : "";
+    document.getElementById("fNotes").value = app ? (app.notes || "") : "";
+
+    document.getElementById("modalBackdrop").style.display = "flex";
+    document.getElementById("fCompany").focus();
+  }
+
+  function closeModal() {
+    document.getElementById("modalBackdrop").style.display = "none";
+    state.editingId = null;
+  }
+
+  function handleSave() {
+    var company = document.getElementById("fCompany").value.trim();
+    var role = document.getElementById("fRole").value.trim();
+    if (!company || !role) {
+      alert("Please enter at least a company and a role.");
+      return;
+    }
+    var data = {
+      company: company,
+      role: role,
+      region: document.getElementById("fRegion").value,
+      status: document.getElementById("fStatus").value,
+      dateApplied: document.getElementById("fDateApplied").value,
+      nextActionDate: document.getElementById("fNextActionDate").value,
+      nextAction: document.getElementById("fNextAction").value.trim(),
+      link: document.getElementById("fLink").value.trim(),
+      contact: document.getElementById("fContact").value.trim(),
+      notes: document.getElementById("fNotes").value.trim()
+    };
+
+    var finalApp;
+    if (state.editingId) {
+      var existing = state.apps.find(function (x) { return x.id === state.editingId; });
+      finalApp = Object.assign({}, existing, data, { id: state.editingId });
+    } else {
+      finalApp = Object.assign({ id: uid() }, data);
+    }
+    closeModal();
+    persistUpsert(finalApp);
+  }
+
+  function toCsv() {
+    var cols = ["company", "role", "region", "status", "dateApplied", "nextActionDate", "nextAction", "link", "contact", "notes"];
+    var header = cols.join(",");
+    var rows = state.apps.map(function (a) {
+      return cols.map(function (c) {
+        var v = a[c] == null ? "" : String(a[c]);
+        if (v.indexOf(",") !== -1 || v.indexOf('"') !== -1 || v.indexOf("\n") !== -1) {
+          v = '"' + v.replace(/"/g, '""') + '"';
+        }
+        return v;
+      }).join(",");
+    });
+    return header + "\n" + rows.join("\n");
+  }
+
+  function parseCsv(text) {
+    // Minimal RFC4180-ish CSV parser: handles quoted fields, escaped quotes, commas/newlines inside quotes.
+    var rows = [];
+    var row = [];
+    var field = "";
+    var inQuotes = false;
+    var i = 0;
+    while (i < text.length) {
+      var ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += ch; i++; continue;
+      } else {
+        if (ch === '"') { inQuotes = true; i++; continue; }
+        if (ch === ",") { row.push(field); field = ""; i++; continue; }
+        if (ch === "\n" || ch === "\r") {
+          if (ch === "\r" && text[i + 1] === "\n") i++;
+          row.push(field); field = "";
+          if (row.length > 1 || row[0] !== "") rows.push(row);
+          row = []; i++; continue;
+        }
+        field += ch; i++; continue;
+      }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    if (rows.length === 0) return [];
+
+    var header = rows[0].map(function (h) { return h.trim(); });
+    var expected = ["company", "role", "region", "status", "dateApplied", "nextActionDate", "nextAction", "link", "contact", "notes"];
+    var idx = {};
+    expected.forEach(function (key) {
+      var pos = header.indexOf(key);
+      idx[key] = pos;
+    });
+
+    var out = [];
+    for (var r = 1; r < rows.length; r++) {
+      var cols = rows[r];
+      if (cols.length === 1 && cols[0] === "") continue;
+      var obj = { id: uid() };
+      expected.forEach(function (key) {
+        obj[key] = idx[key] !== -1 && idx[key] !== undefined ? (cols[idx[key]] || "") : "";
+      });
+      if (!obj.status || !STATUS_META[obj.status]) obj.status = "Applied";
+      if (!obj.region) obj.region = "Other";
+      if (!obj.company && !obj.role) continue;
+      out.push(obj);
+    }
+    return out;
+  }
+
+  function handleImportFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var imported;
+      try {
+        imported = parseCsv(String(reader.result));
+      } catch (e) {
+        alert("Could not read that file \u2014 make sure it's a CSV exported from this tracker.");
+        return;
+      }
+      if (imported.length === 0) {
+        alert("No applications found in that file.");
+        return;
+      }
+      var msg = "Import " + imported.length + " application" + (imported.length === 1 ? "" : "s") +
+        "? They'll be added to your existing " + state.apps.length + ".";
+      if (!confirm(msg)) return;
+      persistImportMany(imported).then(function () {
+        alert("Imported " + imported.length + " application" + (imported.length === 1 ? "" : "s") + ".");
+      });
+    };
+    reader.onerror = function () {
+      alert("Could not read that file.");
+    };
+    reader.readAsText(file);
+  }
+
+  function handleExport() {
+    var csv = toCsv();
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "job-applications.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function wireStatic() {
+    document.getElementById("addBtn").addEventListener("click", function () { openModal(null); });
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+    document.getElementById("saveBtn").addEventListener("click", handleSave);
+    document.getElementById("modalBackdrop").addEventListener("click", function (e) {
+      if (e.target === document.getElementById("modalBackdrop")) closeModal();
+    });
+    document.getElementById("filterRegion").addEventListener("change", function (e) {
+      state.filterRegion = e.target.value;
+      renderAll();
+    });
+    document.getElementById("sortBy").addEventListener("change", function (e) {
+      state.sortBy = e.target.value;
+      renderAll();
+    });
+    document.getElementById("exportBtn").addEventListener("click", handleExport);
+    document.getElementById("importBtn").addEventListener("click", function () {
+      document.getElementById("importFile").click();
+    });
+    document.getElementById("importFile").addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (file) handleImportFile(file);
+      e.target.value = "";
+    });
+    document.getElementById("authSendBtn").addEventListener("click", handleSendMagicLink);
+    document.getElementById("authEmail").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") handleSendMagicLink();
+    });
+    document.getElementById("signOutBtn").addEventListener("click", handleSignOut);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeModal();
+    });
+  }
+
+  wireStatic();
+  initAuth();
+})();
+</script>
+</body>
+</html>
