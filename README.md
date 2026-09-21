@@ -4,9 +4,9 @@ A lightweight, self-hosted job application tracker with real cloud storage,
 magic-link email sign-in, and CSV import/export — no framework, no build
 step, one HTML file.
 
-**Live site:** _add your GitHub Pages URL here once deployed_
+**Live site:**[ _add your GitHub Pages URL here once deployed_
 (`https://<your-username>.github.io/<repo-name>/`)
-
+](https://zixi-chen122.github.io/job-tracker/)
 ## Features
 
 - **Add, edit, and delete applications** with company, role, region, status,
