@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Job Application Tracker</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>\ud83d\udcbc</text></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -170,7 +170,7 @@
 <body>
 <div class="auth-gate" id="authGate">
   <div class="auth-card">
-    <div class="big">\ud83d\udcbc</div>
+    <div class="big">💼</div>
     <h2>Job Application Tracker</h2>
     <p>Sign in with your email to access your data from any device.</p>
     <input type="text" id="authEmail" placeholder="you@example.com" autocomplete="email" />
@@ -181,7 +181,7 @@
 
 <div class="wrap" id="appRoot">
   <header class="top">
-    <h1>\ud83d\udcbc Job Application Tracker</h1>
+    <h1>💼 Job Application Tracker</h1>
     <div>
       <button class="btn-secondary" id="importBtn" type="button">Import CSV</button>
       <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;" />
@@ -190,7 +190,7 @@
     </div>
   </header>
   <div class="whoami" style="margin-bottom:18px;">
-    <span>\u2601\ufe0f Signed in as <strong id="whoamiEmail"></strong></span>
+    <span>☁️ Signed in as <strong id="whoamiEmail"></strong></span>
     <button class="btn-ghost" id="signOutBtn" type="button">Sign out</button>
   </div>
 
@@ -208,7 +208,7 @@
     <select id="sortBy">
       <option value="dateDesc">Newest first</option>
       <option value="dateAsc">Oldest first</option>
-      <option value="company">Company A\u2013Z</option>
+      <option value="company">Company A–Z</option>
       <option value="nextAction">Next action date</option>
     </select>
     <div class="spacer"></div>
@@ -231,8 +231,8 @@
       <tbody id="tbody"></tbody>
     </table>
     <div class="empty" id="emptyState" style="display:none;">
-      <div class="big">\ud83d\udcec</div>
-      <span class="empty-text">No applications yet \u2014 click \u201c+ Add Application\u201d to log your first one.</span>
+      <div class="big">📬</div>
+      <span class="empty-text">No applications yet — click “+ Add Application” to log your first one.</span>
     </div>
   </div>
 
