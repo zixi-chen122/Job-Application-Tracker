@@ -23,6 +23,8 @@
 
     --applied: #6b7d8f;
     --applied-bg: #e8edf1;
+    --toapply: #7a5ea8;
+    --toapply-bg: #ece5f4;
     --screening: #9a7b2f;
     --screening-bg: #f3ecd7;
     --interview: #3d7a5c;
@@ -55,6 +57,8 @@
 
       --applied: #9db6c9;
       --applied-bg: #23303a;
+      --toapply: #c9aee8;
+      --toapply-bg: #2f2438;
       --screening: #d8bd6c;
       --screening-bg: #3a331d;
       --interview: #8fceac;
@@ -72,7 +76,7 @@
     --border-strong: #4a4235; --text: #ece7dd; --text-muted: #a89f8e;
     --accent: #e2895f; --accent-soft: #3a2a22; --focus: #c9ad84;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
-    --applied: #9db6c9; --applied-bg: #23303a; --screening: #d8bd6c; --screening-bg: #3a331d;
+    --applied: #9db6c9; --applied-bg: #23303a; --toapply: #c9aee8; --toapply-bg: #2f2438; --screening: #d8bd6c; --screening-bg: #3a331d;
     --interview: #8fceac; --interview-bg: #1f3229; --offer: #8fdb9a; --offer-bg: #1c3220;
     --rejected: #e29a9a; --rejected-bg: #3a2222; --withdrawn: #b8b1a3; --withdrawn-bg: #2c2820;
   }
@@ -91,16 +95,15 @@
   h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
   .sub { color: var(--text-muted); font-size: 13.5px; margin: 4px 0 22px; }
 
-  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 22px; }
-  @media (max-width: 720px) { .stats { grid-template-columns: repeat(3, 1fr); } }
-  .stat {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 12px 12px; text-align: center; cursor: pointer; transition: border-color .15s, transform .1s;
+  .page-tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .page-tab {
+    background: transparent; border: none; border-bottom: 2px solid transparent; border-radius: 0;
+    padding: 10px 4px; margin-right: 18px; font-size: 14.5px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; transition: color .15s, border-color .15s;
   }
-  .stat:hover { border-color: var(--border-strong); }
-  .stat.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-  .stat .n { font-size: 20px; font-weight: 650; }
-  .stat .l { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .03em; }
+  .page-tab:hover { color: var(--text); }
+  .page-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .page-tab .n { color: var(--text-muted); font-weight: 500; margin-left: 3px; }
 
   .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
   select, input[type="text"], input[type="date"], input[type="url"], textarea {
@@ -161,6 +164,8 @@
   .auth-card p { color: var(--text-muted); font-size: 13.5px; margin: 0 0 18px; }
   .auth-card input { width: 100%; margin-bottom: 10px; text-align: center; }
   .auth-card button { width: 100%; }
+  .auth-divider { color: var(--text-muted); font-size: 12px; margin: 14px 0; }
+  #authGoogleBtn { margin-top: 0; }
   .auth-status { font-size: 13px; margin-top: 12px; color: var(--text-muted); min-height: 18px; }
   .whoami { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
   .whoami button { padding: 4px 10px; font-size: 12.5px; }
@@ -175,6 +180,8 @@
     <p>Sign in with your email to access your data from any device.</p>
     <input type="text" id="authEmail" placeholder="you@example.com" autocomplete="email" />
     <button class="btn-primary" id="authSendBtn" type="button">Send magic link</button>
+    <div class="auth-divider">or</div>
+    <button class="btn-secondary" id="authGoogleBtn" type="button">Continue with Google</button>
     <div class="auth-status" id="authStatus"></div>
   </div>
 </div>
@@ -194,9 +201,12 @@
     <button class="btn-ghost" id="signOutBtn" type="button">Sign out</button>
   </div>
 
-  <div class="stats" id="stats"></div>
+  <div class="page-tabs" id="pageTabs"></div>
 
   <div class="toolbar">
+    <select id="filterStatus" style="display:none;">
+      <option value="">All statuses</option>
+    </select>
     <select id="filterRegion">
       <option value="">All regions</option>
       <option>Germany</option>
@@ -212,11 +222,12 @@
       <option value="nextAction">Next action date</option>
     </select>
     <div class="spacer"></div>
-    <span class="muted" id="countLabel" style="font-size:13px;"></span>
+    <span class="muted" id="pageCountLabel" style="font-size:13px;"></span>
   </div>
 
+  <div id="pageToApply">
   <div class="table-scroll">
-    <table id="table">
+    <table id="tableToApply">
       <thead>
         <tr>
           <th>Company / Role</th>
@@ -228,12 +239,36 @@
           <th></th>
         </tr>
       </thead>
-      <tbody id="tbody"></tbody>
+      <tbody id="tbodyToApply"></tbody>
     </table>
-    <div class="empty" id="emptyState" style="display:none;">
+    <div class="empty" id="emptyToApply" style="display:none;">
+      <div class="big">📝</div>
+      <span class="empty-text">Nothing on your to-apply list right now.</span>
+    </div>
+  </div>
+  </div>
+
+  <div id="pageHistory" style="display:none;">
+  <div class="table-scroll">
+    <table id="tableHistory">
+      <thead>
+        <tr>
+          <th>Company / Role</th>
+          <th>Region</th>
+          <th>Applied</th>
+          <th>Status</th>
+          <th>Next action</th>
+          <th>Link</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbodyHistory"></tbody>
+    </table>
+    <div class="empty" id="emptyHistory" style="display:none;">
       <div class="big">📬</div>
       <span class="empty-text">No applications yet — click “+ Add Application” to log your first one.</span>
     </div>
+  </div>
   </div>
 
   <footer class="note">Your data is stored in your own Supabase database, protected by row-level security tied to your account.</footer>
@@ -264,6 +299,7 @@
       <div class="field">
         <label for="fStatus">Status</label>
         <select id="fStatus">
+          <option>To Apply</option>
           <option>Applied</option>
           <option>Screening</option>
           <option>Interview</option>
@@ -315,6 +351,7 @@
   var TABLE = "applications";
 
   var STATUS_META = {
+    "To Apply": { color: "toapply" },
     Applied:    { color: "applied" },
     Screening:  { color: "screening" },
     Interview:  { color: "interview" },
@@ -322,11 +359,17 @@
     Rejected:   { color: "rejected" },
     Withdrawn:  { color: "withdrawn" }
   };
-  var STATUS_ORDER = ["Applied", "Screening", "Interview", "Offer", "Rejected", "Withdrawn"];
+  var STATUS_ORDER = ["To Apply", "Applied", "Screening", "Interview", "Offer", "Rejected", "Withdrawn"];
+  var HISTORY_STATUSES = STATUS_ORDER.filter(function (s) { return s !== "To Apply"; });
+  var PAGES = {
+    toApply: { key: "toApply", label: "📝 To Apply", match: function (a) { return a.status === "To Apply"; } },
+    history: { key: "history", label: "📬 History", match: function (a) { return a.status !== "To Apply"; } }
+  };
 
   var state = {
     apps: [],
     editingId: null,
+    activePage: "toApply",
     filterStatus: "",
     filterRegion: "",
     sortBy: "dateDesc"
@@ -459,6 +502,18 @@
     statusEl.textContent = "Check your email for a sign-in link.";
   }
 
+  async function handleGoogleSignIn() {
+    var statusEl = document.getElementById("authStatus");
+    var res = await sb.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin + window.location.pathname }
+    });
+    if (res.error) {
+      console.error("Google sign-in failed", res.error);
+      statusEl.textContent = "Could not start Google sign-in. Please try again.";
+    }
+  }
+
   async function handleSignOut() {
     await sb.auth.signOut();
     currentUser = null;
@@ -502,34 +557,29 @@
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
 
-  function renderStats() {
-    var counts = {};
-    STATUS_ORDER.forEach(function (s) { counts[s] = 0; });
-    state.apps.forEach(function (a) { if (counts[a.status] !== undefined) counts[a.status]++; });
-
-    var total = state.apps.length;
-    var cards = [{ key: "", label: "All", n: total }].concat(
-      STATUS_ORDER.map(function (s) { return { key: s, label: s, n: counts[s] }; })
-    );
-
-    var html = cards.map(function (c) {
-      var active = state.filterStatus === c.key ? " active" : "";
-      return '<div class="stat' + active + '" data-status="' + escapeHtml(c.key) + '">' +
-        '<div class="n">' + c.n + '</div><div class="l">' + escapeHtml(c.label) + '</div></div>';
+  function renderTabs() {
+    var html = ["toApply", "history"].map(function (key) {
+      var page = PAGES[key];
+      var n = state.apps.filter(page.match).length;
+      var active = state.activePage === key ? " active" : "";
+      return '<button class="page-tab' + active + '" data-page="' + key + '" type="button">' +
+        page.label + '<span class="n">(' + n + ')</span></button>';
     }).join("");
-    document.getElementById("stats").innerHTML = html;
+    document.getElementById("pageTabs").innerHTML = html;
 
-    Array.prototype.forEach.call(document.querySelectorAll(".stat"), function (el) {
+    Array.prototype.forEach.call(document.querySelectorAll(".page-tab"), function (el) {
       el.addEventListener("click", function () {
-        state.filterStatus = el.getAttribute("data-status");
+        state.activePage = el.getAttribute("data-page");
         renderAll();
       });
     });
   }
 
   function getFiltered() {
+    var page = PAGES[state.activePage];
     var list = state.apps.filter(function (a) {
-      if (state.filterStatus && a.status !== state.filterStatus) return false;
+      if (!page.match(a)) return false;
+      if (state.activePage === "history" && state.filterStatus && a.status !== state.filterStatus) return false;
       if (state.filterRegion && a.region !== state.filterRegion) return false;
       return true;
     });
@@ -542,47 +592,33 @@
     return list;
   }
 
-  function renderTable() {
-    var list = getFiltered();
-    var tbody = document.getElementById("tbody");
-    var empty = document.getElementById("emptyState");
-    document.getElementById("countLabel").textContent = list.length + (list.length === 1 ? " application" : " applications");
-
-    if (list.length === 0) {
-      tbody.innerHTML = "";
-      empty.style.display = "block";
-      empty.querySelector(".empty-text").textContent =
-        "No applications yet \u2014 click \u201c+ Add Application\u201d to log your first one.";
-      return;
-    }
-    empty.style.display = "none";
-
-    tbody.innerHTML = list.map(function (a) {
-      var meta = STATUS_META[a.status] || STATUS_META.Applied;
-      var statusOptions = STATUS_ORDER.map(function (s) {
-        return '<option value="' + s + '"' + (s === a.status ? " selected" : "") + '>' + s + "</option>";
-      }).join("");
-      var linkCell = a.link
-        ? '<a class="link-icon" href="' + escapeHtml(a.link) + '" target="_blank" rel="noopener noreferrer">Open \u2197</a>'
-        : '<span class="muted">\u2014</span>';
-      var nextAction = a.nextAction || a.nextActionDate
-        ? escapeHtml(a.nextAction || "") + (a.nextActionDate ? '<div class="role">' + fmtDate(a.nextActionDate) + "</div>" : "")
-        : '<span class="muted">\u2014</span>';
-
-      return '<tr data-id="' + a.id + '">' +
-        '<td><div class="company">' + escapeHtml(a.company) + '</div><div class="role">' + escapeHtml(a.role) + '</div></td>' +
-        '<td class="nowrap">' + escapeHtml(a.region) + '</td>' +
-        '<td class="nowrap">' + fmtDate(a.dateApplied) + '</td>' +
-        '<td><select class="status-select" style="background:var(--' + meta.color + '-bg);color:var(--' + meta.color + ')" data-id="' + a.id + '">' + statusOptions + '</select></td>' +
-        '<td>' + nextAction + '</td>' +
-        '<td class="nowrap">' + linkCell + '</td>' +
-        '<td class="row-actions nowrap">' +
-          '<button class="btn-ghost" data-edit="' + a.id + '" title="Edit" type="button">\u270e</button>' +
-          '<button class="btn-ghost btn-danger" data-del="' + a.id + '" title="Delete" type="button">\u2715</button>' +
-        '</td>' +
-      '</tr>';
+  function rowHtml(a) {
+    var meta = STATUS_META[a.status] || STATUS_META.Applied;
+    var statusOptions = STATUS_ORDER.map(function (s) {
+      return '<option value="' + s + '"' + (s === a.status ? " selected" : "") + '>' + s + "</option>";
     }).join("");
+    var linkCell = a.link
+      ? '<a class="link-icon" href="' + escapeHtml(a.link) + '" target="_blank" rel="noopener noreferrer">Open \u2197</a>'
+      : '<span class="muted">\u2014</span>';
+    var nextAction = a.nextAction || a.nextActionDate
+      ? escapeHtml(a.nextAction || "") + (a.nextActionDate ? '<div class="role">' + fmtDate(a.nextActionDate) + "</div>" : "")
+      : '<span class="muted">\u2014</span>';
 
+    return '<tr data-id="' + a.id + '">' +
+      '<td><div class="company">' + escapeHtml(a.company) + '</div><div class="role">' + escapeHtml(a.role) + '</div></td>' +
+      '<td class="nowrap">' + escapeHtml(a.region) + '</td>' +
+      '<td class="nowrap">' + fmtDate(a.dateApplied) + '</td>' +
+      '<td><select class="status-select" style="background:var(--' + meta.color + '-bg);color:var(--' + meta.color + ')" data-id="' + a.id + '">' + statusOptions + '</select></td>' +
+      '<td>' + nextAction + '</td>' +
+      '<td class="nowrap">' + linkCell + '</td>' +
+      '<td class="row-actions nowrap">' +
+        '<button class="btn-ghost" data-edit="' + a.id + '" title="Edit" type="button">\u270e</button>' +
+        '<button class="btn-ghost btn-danger" data-del="' + a.id + '" title="Delete" type="button">\u2715</button>' +
+      '</td>' +
+    '</tr>';
+  }
+
+  function wireRowEvents(tbody) {
     Array.prototype.forEach.call(tbody.querySelectorAll(".status-select"), function (sel) {
       sel.addEventListener("change", function () {
         var id = sel.getAttribute("data-id");
@@ -607,8 +643,41 @@
     });
   }
 
+  function renderSection(list, tbodyId, emptyId, emptyText) {
+    var tbody = document.getElementById(tbodyId);
+    var empty = document.getElementById(emptyId);
+
+    if (list.length === 0) {
+      tbody.innerHTML = "";
+      empty.style.display = "block";
+      empty.querySelector(".empty-text").textContent = emptyText;
+      return;
+    }
+    empty.style.display = "none";
+    tbody.innerHTML = list.map(rowHtml).join("");
+    wireRowEvents(tbody);
+  }
+
+  function renderTable() {
+    var isToApply = state.activePage === "toApply";
+    document.getElementById("pageToApply").style.display = isToApply ? "block" : "none";
+    document.getElementById("pageHistory").style.display = isToApply ? "none" : "block";
+    document.getElementById("filterStatus").style.display = isToApply ? "none" : "";
+
+    var list = getFiltered();
+    document.getElementById("pageCountLabel").textContent =
+      list.length + (list.length === 1 ? " application" : " applications");
+
+    if (isToApply) {
+      renderSection(list, "tbodyToApply", "emptyToApply", "Nothing on your to-apply list right now.");
+    } else {
+      renderSection(list, "tbodyHistory", "emptyHistory",
+        "No applications yet \u2014 click \u201c+ Add Application\u201d to log your first one.");
+    }
+  }
+
   function renderAll() {
-    renderStats();
+    renderTabs();
     renderTable();
   }
 
@@ -620,7 +689,7 @@
     document.getElementById("fCompany").value = app ? app.company : "";
     document.getElementById("fRole").value = app ? app.role : "";
     document.getElementById("fRegion").value = app ? app.region : "Germany";
-    document.getElementById("fStatus").value = app ? app.status : "Applied";
+    document.getElementById("fStatus").value = app ? app.status : "To Apply";
     document.getElementById("fDateApplied").value = app ? app.dateApplied : new Date().toISOString().slice(0, 10);
     document.getElementById("fNextActionDate").value = app ? (app.nextActionDate || "") : "";
     document.getElementById("fNextAction").value = app ? (app.nextAction || "") : "";
@@ -784,6 +853,17 @@
     document.getElementById("modalBackdrop").addEventListener("click", function (e) {
       if (e.target === document.getElementById("modalBackdrop")) closeModal();
     });
+    var statusSelect = document.getElementById("filterStatus");
+    HISTORY_STATUSES.forEach(function (s) {
+      var opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      statusSelect.appendChild(opt);
+    });
+    statusSelect.addEventListener("change", function (e) {
+      state.filterStatus = e.target.value;
+      renderAll();
+    });
     document.getElementById("filterRegion").addEventListener("change", function (e) {
       state.filterRegion = e.target.value;
       renderAll();
@@ -802,6 +882,7 @@
       e.target.value = "";
     });
     document.getElementById("authSendBtn").addEventListener("click", handleSendMagicLink);
+    document.getElementById("authGoogleBtn").addEventListener("click", handleGoogleSignIn);
     document.getElementById("authEmail").addEventListener("keydown", function (e) {
       if (e.key === "Enter") handleSendMagicLink();
     });
