@@ -46,7 +46,10 @@ the secrecy of that key.
 
 1. **Create a free [Supabase](https://supabase.com) project.**
 2. **Run the schema** in the Supabase SQL Editor — see
-   [`schema.sql`](./schema.sql) in this repo.
+   [`schema.sql`](./schema.sql) in this repo. This creates the complete
+   current schema in one go, so a fresh setup only needs this one file (the
+   [`migrations/`](./migrations) folder is historical record of how the
+   schema evolved, not something you need to run separately here).
 3. **Enable email auth** (on by default) and add your future GitHub Pages
    URL under Authentication → URL Configuration → Redirect URLs.
 4. **Get your Project URL and Publishable key** from the "Connect" button
@@ -57,6 +60,22 @@ the secrecy of that key.
    Settings → Pages → Deploy from branch → `main` → `/ (root)`.
 6. **Add the resulting Pages URL** to Supabase's Redirect URLs (step 3)
    if you haven't already.
+
+## Updating an existing database
+
+If you already had this project set up before Priority or Job Type existed,
+don't re-run `schema.sql` (it will fail trying to recreate existing tables).
+Instead, run the files in [`migrations/`](./migrations) in order — each one
+applies only its incremental change:
+
+- `001_add_priority_and_settings.sql` — adds `priority`, `resume_version`,
+  `cover_letter` columns and the `user_settings` table
+  (note: `resume_version`/`cover_letter` were later removed, see 003 below)
+- `002_add_job_type.sql` — adds the `job_type` column
+- `003_add_source.sql` — adds the `source` column
+- `004_add_category.sql` — adds the `category` column (manual override of the auto role tag)
+- `003_remove_resume_and_cover_letter.sql` — drops `resume_version` and
+  `cover_letter`, which turned out not to be useful in practice
 
 ## Local development
 
