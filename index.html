@@ -27,6 +27,8 @@
     --toapply-bg: #ece5f4;
     --screening: #9a7b2f;
     --screening-bg: #f3ecd7;
+    --assessment: #5a6fa8;
+    --assessment-bg: #e6e9f4;
     --interview: #3d7a5c;
     --interview-bg: #e2efe8;
     --offer: #2f7d3f;
@@ -67,6 +69,8 @@
       --toapply-bg: #2f2438;
       --screening: #d8bd6c;
       --screening-bg: #3a331d;
+      --assessment: #a9b8e6;
+      --assessment-bg: #262b3c;
       --interview: #8fceac;
       --interview-bg: #1f3229;
       --offer: #8fdb9a;
@@ -89,6 +93,7 @@
     --accent: #e2895f; --accent-soft: #3a2a22; --focus: #c9ad84;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
     --applied: #9db6c9; --applied-bg: #23303a; --toapply: #c9aee8; --toapply-bg: #2f2438; --screening: #d8bd6c; --screening-bg: #3a331d;
+    --assessment: #a9b8e6; --assessment-bg: #262b3c;
     --interview: #8fceac; --interview-bg: #1f3229; --offer: #8fdb9a; --offer-bg: #1c3220;
     --rejected: #e29a9a; --rejected-bg: #3a2222; --withdrawn: #b8b1a3; --withdrawn-bg: #2c2820;
     --tier1: #e2895f; --tier1-bg: #3a2a22; --tier2: #9db6c9; --tier2-bg: #23303a; --tier3: #a8a190; --tier3-bg: #2a2820;
@@ -108,18 +113,18 @@
   h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
   .sub { color: var(--text-muted); font-size: 13.5px; margin: 4px 0 22px; }
 
-  .page-tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .page-tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 1px solid var(--border); overflow-x: auto; }
   .page-tab {
     background: transparent; border: none; border-bottom: 2px solid transparent; border-radius: 0;
     padding: 10px 4px; margin-right: 18px; font-size: 14.5px; font-weight: 600; color: var(--text-muted);
-    cursor: pointer; transition: color .15s, border-color .15s;
+    cursor: pointer; transition: color .15s, border-color .15s; white-space: nowrap; flex-shrink: 0;
   }
   .page-tab:hover { color: var(--text); }
   .page-tab.active { color: var(--text); border-bottom-color: var(--accent); }
   .page-tab .n { color: var(--text-muted); font-weight: 500; margin-left: 3px; }
 
   .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
-  select, input[type="text"], input[type="search"], input[type="date"], input[type="url"], textarea {
+  select, input[type="text"], input[type="search"], input[type="date"], input[type="url"], input[type="number"], textarea {
     font: inherit; font-size: 14px; color: var(--text); background: var(--surface);
     border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; outline: none;
   }
@@ -162,6 +167,9 @@
   th.actions-cell, td.actions-cell { position: sticky; right: 0; z-index: 1; width: 76px; background: var(--surface); box-shadow: -1px 0 0 var(--border); }
   th.actions-cell { z-index: 2; background: var(--surface-2); }
   tbody tr:hover td.actions-cell { background: var(--surface-2); }
+  /* Applied tab: alternate a tint per applied date, so each day's batch reads as a block */
+  tbody tr.day-alt td { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+  tbody tr.day-alt:hover td { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
   @media (max-width: 700px) {
     .wrap { padding-left: 10px; padding-right: 10px; }
   }
@@ -175,6 +183,7 @@
   .field label { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
   .field input, .field select, .field textarea { width: 100%; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-row[hidden] { display: none; }
   textarea { resize: vertical; min-height: 56px; font-family: inherit; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
@@ -190,6 +199,44 @@
   .summary-day b { font-size: 14px; color: var(--text); }
   .summary-day.today { outline: 2px solid var(--accent); outline-offset: -2px; }
   .summary-day.future { opacity: .45; }
+  .summary-day.met { background: var(--offer-bg); }
+  .summary-day.met b { color: var(--offer); }
+  .goal { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--accent-soft); border-radius: var(--radius); padding: 10px 16px; margin-bottom: 14px; font-size: 13.5px; }
+  .goal[hidden] { display: none; }
+  .goal.done { background: var(--offer-bg); }
+  .goal-track { flex: 1; min-width: 120px; max-width: 320px; height: 8px; background: var(--surface); border-radius: 4px; overflow: hidden; }
+  .goal-fill { height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; }
+  .goal.done .goal-fill { background: var(--offer); }
+  .reject-note { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; }
+
+  .dash { display: grid; gap: 16px; }
+  .dash .summary { margin-bottom: 0; }
+  .dash-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; min-width: 0; }
+  .dash-card h3 { margin: 0 0 2px; font-size: 14.5px; }
+  .dash-card .hint { font-size: 12px; color: var(--text-muted); margin: 0 0 14px; }
+  .dash-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; padding: 2px; background: var(--surface-2); }
+  .seg button { padding: 4px 12px; font-size: 12.5px; color: var(--text-muted); background: transparent; border-radius: 7px; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .vchart { display: flex; align-items: flex-end; gap: 2px; height: 180px; border-bottom: 1px solid var(--border-strong); }
+  .vcol { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+  .vcol:hover { background: var(--surface-2); border-radius: 4px 4px 0 0; }
+  .vcol .val { font-size: 10.5px; color: var(--text-muted); line-height: 1.4; }
+  .vcol .bar { width: 100%; max-width: 28px; background: var(--accent); border-radius: 4px 4px 0 0; }
+  .vcol.current .bar { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+  .vaxis { display: flex; gap: 2px; margin-top: 4px; }
+  .vaxis span { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; color: var(--text-muted); white-space: nowrap; overflow: visible; }
+  .hbars { display: grid; gap: 8px; }
+  .hbar { display: grid; grid-template-columns: minmax(70px, 34%) 1fr auto; align-items: center; gap: 10px; font-size: 13px; padding: 2px 4px; margin: 0 -4px; border-radius: 6px; background: transparent; border: none; text-align: left; color: var(--text); font-weight: 400; width: calc(100% + 8px); }
+  button.hbar:hover { background: var(--surface-2); }
+  .hbar .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hbar .track { height: 10px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .hbar .fill { height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; }
+  .hbar .num { font-variant-numeric: tabular-nums; color: var(--text-muted); font-size: 12.5px; white-space: nowrap; }
+  .hbar .num b { color: var(--text); font-weight: 600; }
+  .funnel-rates { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 14px; }
+  .dash-empty { color: var(--text-muted); font-size: 13px; padding: 20px 0; text-align: center; }
   .priority-hint { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
   select.priority-select { font-size: 12px; font-weight: 600; padding: 4px 8px; border: none; border-radius: 999px; cursor: pointer; }
   select.priority-select:disabled { opacity: .6; cursor: wait; }
@@ -208,11 +255,6 @@
   .whoami { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
   .whoami button { padding: 4px 10px; font-size: 12.5px; }
   #appRoot { display: none; }
-  .drag-column { width: 40px; padding-left: 6px; padding-right: 6px; text-align: center; }
-  .drag-handle { cursor: grab; }
-  .drag-handle:active { cursor: grabbing; }
-  tr.drop-before td { box-shadow: inset 0 3px 0 var(--text-muted); }
-  tr.drop-after td { box-shadow: inset 0 -3px 0 var(--text-muted); }
 </style>
 </head>
 <body>
@@ -245,11 +287,38 @@
     <button class="btn-ghost" id="signOutBtn" type="button">Sign out</button>
   </div>
 
-  <div class="summary" id="summary" aria-live="polite"></div>
+  <div class="goal" id="dailyGoal" role="status"></div>
 
   <div class="page-tabs" id="pageTabs"></div>
 
-  <div class="toolbar">
+  <div class="dash" id="pageOverview">
+    <div class="summary" id="summary" aria-live="polite"></div>
+    <div class="dash-card">
+      <div class="dash-head">
+        <div>
+          <h3>Applications sent</h3>
+          <p class="hint" id="timeHint"></p>
+        </div>
+        <div class="seg" id="timeScale" role="group" aria-label="Time scale">
+          <button type="button" data-scale="day">Day</button>
+          <button type="button" data-scale="week">Week</button>
+          <button type="button" data-scale="month">Month</button>
+        </div>
+      </div>
+      <div id="timeChart"></div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card"><h3>By status</h3><p class="hint">Click a status to see those applications.</p><div id="byStatus"></div></div>
+      <div class="dash-card"><h3>By region</h3><p class="hint">Share of all applications sent.</p><div id="byRegion"></div></div>
+      <div class="dash-card"><h3>By category</h3><p class="hint">Share of all applications sent.</p><div id="byCategory"></div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card"><h3>Conversion</h3><p class="hint" id="funnelHint"></p><div id="funnel"></div></div>
+      <div class="dash-card"><h3>Rejections by stage</h3><p class="hint">Where in the process each rejection came.</p><div id="rejectStages"></div></div>
+    </div>
+  </div>
+
+  <div class="toolbar" id="listToolbar">
     <input type="search" id="searchInput" placeholder="Search company or role" aria-label="Search company or role" />
     <select id="filterStatus" style="display:none;">
       <option value="">All statuses</option>
@@ -276,7 +345,6 @@
       <option value="">All sources</option>
     </select>
     <select id="sortBy">
-      <option value="manual" id="manualSortOption">Custom order</option>
       <option value="dateDesc">Newest first</option>
       <option value="dateAsc">Oldest first</option>
       <option value="company">Company A–Z</option>
@@ -287,34 +355,7 @@
     <span class="muted" id="pageCountLabel" style="font-size:13px;"></span>
   </div>
 
-  <div id="pageToApply">
-  <p class="muted" style="font-size:12px;">Drag a job’s handle to reorder. Custom order is saved in this browser.</p>
-  <div class="table-scroll">
-    <table id="tableToApply">
-      <thead>
-        <tr>
-          <th class="drag-column" aria-label="Reorder"></th>
-          <th>Company / Role</th>
-          <th>Region</th>
-          <th>Job Type</th>
-          <th>Priority</th>
-          <th>Added</th>
-          <th>Status</th>
-          <th>Next action</th>
-          <th>Link</th>
-          <th class="actions-cell" aria-label="Actions"></th>
-        </tr>
-      </thead>
-      <tbody id="tbodyToApply"></tbody>
-    </table>
-    <div class="empty" id="emptyToApply" style="display:none;">
-      <div class="big">📝</div>
-      <span class="empty-text">Nothing on your to-apply list right now.</span>
-    </div>
-  </div>
-  </div>
-
-  <div id="pageList" style="display:none;">
+  <div id="pageList">
   <div class="table-scroll">
     <table id="tableList">
       <thead>
@@ -345,6 +386,11 @@
 <div class="modal-backdrop" id="modalBackdrop" style="display:none;">
   <div class="modal">
     <h2 id="modalTitle">Add Application</h2>
+    <div class="field">
+      <label for="fLink">Job posting link</label>
+      <input type="url" id="fLink" placeholder="Paste the link first \u2014 company and role fill in when possible" />
+      <div class="priority-hint" id="linkHint"></div>
+    </div>
     <div class="field">
       <label for="fCompany">Company</label>
       <input type="text" id="fCompany" placeholder="e.g. SAP" />
@@ -383,13 +429,28 @@
       <div class="field">
         <label for="fStatus">Status</label>
         <select id="fStatus">
-          <option>To Apply</option>
           <option>Applied</option>
           <option>Screening</option>
+          <option>Assessment</option>
           <option>Interview</option>
           <option>Offer</option>
           <option>Rejected</option>
           <option>Withdrawn</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row" id="rejectedFields" hidden>
+      <div class="field">
+        <label for="fRejectedDate">Rejected on</label>
+        <input type="date" id="fRejectedDate" />
+      </div>
+      <div class="field">
+        <label for="fRejectedStage">Rejected at</label>
+        <select id="fRejectedStage">
+          <option>Resume</option>
+          <option>Screening</option>
+          <option>Assessment</option>
+          <option>Interview</option>
         </select>
       </div>
     </div>
@@ -404,7 +465,7 @@
     </div>
     <div class="field-row">
       <div class="field">
-        <label for="fDateApplied" id="fDateAppliedLabel">Date applied</label>
+        <label for="fDateApplied">Date applied</label>
         <input type="date" id="fDateApplied" />
       </div>
       <div class="field">
@@ -415,10 +476,6 @@
     <div class="field">
       <label for="fNextAction">Next action</label>
       <input type="text" id="fNextAction" placeholder="e.g. Follow up with recruiter" />
-    </div>
-    <div class="field">
-      <label for="fLink">Job posting link</label>
-      <input type="url" id="fLink" placeholder="https://..." />
     </div>
     <div class="field">
       <label for="fSource">Source</label>
@@ -442,8 +499,14 @@
 
 <div class="modal-backdrop" id="settingsBackdrop" style="display:none;">
   <div class="modal">
-    <h2>Priority Settings</h2>
-    <p class="sub" style="margin:-6px 0 16px;">
+    <h2>Settings</h2>
+    <div class="field">
+      <label for="sDailyGoal">Daily goal: applications to send per day</label>
+      <input type="number" id="sDailyGoal" min="0" max="100" step="1" style="width:120px;" />
+      <div class="priority-hint">Shown as the progress bar at the top. Set to 0 to hide it.</div>
+    </div>
+    <h3 style="font-size:14.5px;margin:20px 0 4px;">Priorities</h3>
+    <p class="sub" style="margin:0 0 16px;">
       List companies one per line (or comma-separated). New applications will auto-suggest
       a priority when the company or role matches — you can always override it manually.
       Use Recalculate priorities to apply your lists to existing applications.
@@ -479,42 +542,50 @@
   var TABLE = "applications";
 
   var STATUS_META = {
-    "To Apply": { color: "toapply" },
     Applied:    { color: "applied" },
     Screening:  { color: "screening" },
+    Assessment: { color: "assessment" },
     Interview:  { color: "interview" },
     Offer:      { color: "offer" },
     Rejected:   { color: "rejected" },
     Withdrawn:  { color: "withdrawn" }
   };
-  var STATUS_ORDER = ["To Apply", "Applied", "Screening", "Interview", "Offer", "Rejected", "Withdrawn"];
-  var PAGE_ORDER = ["toApply", "applied", "inProgress", "offer", "history"];
+  var STATUS_ORDER = ["Applied", "Screening", "Assessment", "Interview", "Offer", "Rejected", "Withdrawn"];
+  var PAGE_ORDER = ["overview", "applied", "inProgress", "offer", "history"];
   var PAGES = {
-    toApply:    { label: "📝 To Apply",    statuses: ["To Apply"],             empty: "Nothing on your to-apply list right now." },
+    overview:   { label: "📊 Overview",    statuses: null },
     applied:    { label: "📬 Applied",     statuses: ["Applied"],              empty: "No applications waiting on a reply." },
-    inProgress: { label: "💬 In Progress", statuses: ["Screening", "Interview"], empty: "No screenings or interviews in progress." },
+    inProgress: { label: "💬 In Progress", statuses: ["Screening", "Assessment", "Interview"], empty: "No screenings or interviews in progress." },
     offer:      { label: "🎉 Offer",       statuses: ["Offer"],                empty: "No offers yet \u2014 keep going." },
     history:    { label: "🗄️ History",     statuses: ["Rejected", "Withdrawn"], empty: "No rejected or withdrawn applications." }
   };
   PAGE_ORDER.forEach(function (key) {
     var page = PAGES[key];
-    page.match = function (a) { return page.statuses.indexOf(a.status) !== -1; };
+    page.match = function (a) { return !page.statuses || page.statuses.indexOf(a.status) !== -1; };
   });
+
+  // Rejection stage = how far the application got before the "no".
+  var REJECT_STAGES = ["Resume", "Screening", "Assessment", "Interview"];
+  var STAGE_FROM_STATUS = { Applied: "Resume", Screening: "Screening", Assessment: "Assessment", Interview: "Interview" };
+
+  var DEFAULT_DAILY_GOAL = 10; // applications to send each day, until the user sets their own
 
   var state = {
     apps: [],
     editingId: null,
-    activePage: "toApply",
+    activePage: "overview",
+    timeScale: "week",
     filterStatus: "",
     filterRegion: "",
     filterJobType: "",
     filterSource: "",
     filterCategory: "",
     search: "",
-    sortBy: "manual",
-    settings: { tier1Companies: [], tier2Companies: [], tier1Keywords: [] },
+    sortBy: "dateDesc",
+    settings: { tier1Companies: [], tier2Companies: [], tier1Keywords: [], dailyGoal: DEFAULT_DAILY_GOAL },
     priorityTouchedByUser: false,
-    sourceTouchedByUser: false
+    sourceTouchedByUser: false,
+    autofilled: { company: "", role: "" }
   };
 
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -535,6 +606,8 @@
       status: app.status || "Applied",
       priority: app.priority || null,
       date_applied: app.dateApplied || null,
+      rejected_date: app.status === "Rejected" ? app.rejectedDate || null : null,
+      rejected_stage: app.status === "Rejected" ? app.rejectedStage || null : null,
       next_action_date: app.nextActionDate || null,
       next_action: app.nextAction || "",
       link: app.link || "",
@@ -555,6 +628,8 @@
       status: row.status || "Applied",
       priority: row.priority || "",
       dateApplied: row.date_applied || "",
+      rejectedDate: row.rejected_date || "",
+      rejectedStage: row.rejected_stage || "",
       nextActionDate: row.next_action_date || "",
       nextAction: row.next_action || "",
       link: row.link || "",
@@ -638,16 +713,18 @@
     state.settings = {
       tier1Companies: parseList(row.tier1_companies),
       tier2Companies: parseList(row.tier2_companies),
-      tier1Keywords: parseList(row.tier1_keywords)
+      tier1Keywords: parseList(row.tier1_keywords),
+      dailyGoal: row.daily_goal != null ? row.daily_goal : DEFAULT_DAILY_GOAL
     };
   }
 
-  async function saveSettings(tier1Companies, tier2Companies, tier1Keywords) {
+  async function saveSettings(tier1Companies, tier2Companies, tier1Keywords, dailyGoal) {
     var payload = {
       user_id: currentUser.id,
       tier1_companies: tier1Companies.join("\n"),
       tier2_companies: tier2Companies.join("\n"),
       tier1_keywords: tier1Keywords.join("\n"),
+      daily_goal: dailyGoal,
       updated_at: new Date().toISOString()
     };
     var res = await sb.from("user_settings").upsert(payload).select().single();
@@ -656,7 +733,7 @@
       alert("Could not save settings. Please try again.");
       return false;
     }
-    state.settings = { tier1Companies: tier1Companies, tier2Companies: tier2Companies, tier1Keywords: tier1Keywords };
+    state.settings = { tier1Companies: tier1Companies, tier2Companies: tier2Companies, tier1Keywords: tier1Keywords, dailyGoal: dailyGoal };
     return true;
   }
 
@@ -696,6 +773,90 @@
     { name: "MyCareersFuture", match: /(^|\.)mycareersfuture\.gov\.sg$/ }
   ];
   var SOURCE_NAMES = SOURCES.map(function (src) { return src.name; });
+
+  // ---- autofill: company and job title read from the job link's address ----
+  var ACRONYMS = ["ai", "ml", "it", "ui", "ux", "hr", "bi", "qa", "sre", "nlp", "llm", "sap", "bmw", "ibm", "aws", "gcp", "vp", "cto", "ceo", "ag", "se", "sa", "ab", "nv", "llc", "gmbh", "ii", "iii"];
+
+  function slugToText(slug) {
+    var text = String(slug || "");
+    try { text = decodeURIComponent(text); } catch (e) { /* keep raw */ }
+    text = text.replace(/[-_+]+/g, " ").replace(/\s+/g, " ").trim()
+      .replace(/\s*\b[mwfd]\s[mwfd]\s[mwfdx]\b\s*$/i, ""); // German "(m/w/d)" suffix
+    return text.split(" ").map(function (w) {
+      var lower = w.toLowerCase();
+      if (lower === "gmbh") return "GmbH";
+      if (ACRONYMS.indexOf(lower) !== -1) return lower.toUpperCase();
+      return w === lower ? w.charAt(0).toUpperCase() + w.slice(1) : w; // keep existing capitals
+    }).join(" ");
+  }
+
+  // Returns { company, role }, each "" when the link doesn't say.
+  function parseJobLink(link) {
+    var url;
+    try {
+      var raw = String(link || "").trim();
+      if (!raw) return { company: "", role: "" };
+      url = new URL(/^[a-z]+:\/\//i.test(raw) ? raw : "https://" + raw);
+    } catch (e) {
+      return { company: "", role: "" };
+    }
+    var host = url.hostname.toLowerCase().replace(/^www\./, "");
+    var parts = url.pathname.split("/").filter(Boolean);
+    var sub = host.split(".")[0];
+    var m;
+    var stripId = function (slug) { return slug.replace(/^\d+-/, "").replace(/-\d+$/, ""); };
+
+    // linkedin.com/jobs/view/ai-engineer-at-sap-4012345678
+    if (/(^|\.)linkedin\.com$/.test(host) && parts[1] === "view" && parts[2] && (m = parts[2].match(/^(.+)-at-(.+?)(-\d+)?$/))) {
+      return { role: slugToText(m[1]), company: slugToText(m[2]) };
+    }
+    // sap.wd3.myworkdayjobs.com/.../job/Berlin/AI-Engineer_R12345
+    if (/\.myworkdayjobs\.com$/.test(host)) {
+      var jobAt = parts.indexOf("job");
+      var last = jobAt !== -1 ? parts[parts.length - 1] : "";
+      return { company: slugToText(sub), role: last ? slugToText(last.replace(/_[A-Za-z]*-?\d[\w-]*$/, "")) : "" };
+    }
+    // Boards with the company as the first path segment, sometimes the title after an id.
+    if (/(^|\.)greenhouse\.io$/.test(host) || /(^|\.)lever\.co$/.test(host) || host === "jobs.ashbyhq.com" || host === "apply.workable.com") {
+      return { company: slugToText(parts[0]), role: "" };
+    }
+    if (host === "jobs.smartrecruiters.com" || host === "join.com") {
+      var co = host === "join.com" ? parts[1] : parts[0];
+      var job = host === "join.com" ? parts[2] : parts[1];
+      return { company: slugToText(co), role: job ? slugToText(stripId(job)) : "" };
+    }
+    // Company as the subdomain: sap.jobs.personio.de, sap.recruitee.com/o/ai-engineer, sap.teamtailor.com/jobs/123-ai-engineer
+    if (/\.jobs\.personio\.(de|com)$/.test(host)) return { company: slugToText(sub), role: "" };
+    if (/\.(recruitee|teamtailor)\.com$/.test(host)) {
+      var slug = parts[0] === "o" || parts[0] === "jobs" ? parts[1] : "";
+      return { company: slugToText(sub), role: slug ? slugToText(stripId(slug)) : "" };
+    }
+    // A company's own careers site, e.g. jobs.siemens.com: use the domain name.
+    if (!SOURCES.some(function (src) { return src.match.test(host); }) && host.indexOf(".") !== -1) {
+      var labels = host.split(".");
+      var name = labels.length > 2 && /^(co|com)$/.test(labels[labels.length - 2]) ? labels[labels.length - 3] : labels[labels.length - 2];
+      return { company: slugToText(name), role: "" };
+    }
+    return { company: "", role: "" };
+  }
+
+  // Fill company/role from the link, but never over something the user typed.
+  function autofillFromLink() {
+    var found = parseJobLink(document.getElementById("fLink").value);
+    var filled = [];
+    [["fCompany", "company", "company"], ["fRole", "role", "role"]].forEach(function (f) {
+      var el = document.getElementById(f[0]);
+      if (el.value && el.value !== state.autofilled[f[1]]) return;
+      el.value = found[f[1]];
+      state.autofilled[f[1]] = found[f[1]];
+      if (found[f[1]]) filled.push(f[2]);
+    });
+    document.getElementById("linkHint").textContent = filled.length
+      ? "Filled in the " + filled.join(" and ") + " from the link \u2014 please check " + (filled.length > 1 ? "them." : "it.")
+      : "";
+    updateCategoryOptions();
+    updatePriorityHint();
+  }
 
   function detectSource(link) {
     var host;
@@ -821,7 +982,7 @@
 
   // Withdrawn jobs don't count as sent, even if they had been applied to.
   function countsAsSent(status) {
-    return status !== "To Apply" && status !== "Withdrawn";
+    return status !== "Withdrawn";
   }
 
   // ---- summary: applications actually sent, by date applied ----
@@ -843,14 +1004,25 @@
     });
     var thisWeek = days.reduce(function (sum, d) { return sum + (perDay[d] || 0); }, 0);
 
+    var sentToday = perDay[today] || 0;
+    var goalEl = document.getElementById("dailyGoal");
+    var goal = state.settings.dailyGoal;
+    goalEl.hidden = !goal;
+    goalEl.className = "goal" + (sentToday >= goal ? " done" : "");
+    goalEl.innerHTML =
+      '<span>' + (sentToday >= goal
+        ? "\ud83c\udf89 <b>Daily goal reached</b> \u2014 " + plural(sentToday, "application") + " sent today."
+        : "\ud83c\udfaf <b>" + (goal - sentToday) + " more to go</b> \u2014 " + sentToday + " of " + goal + " applications sent today.") + '</span>' +
+      '<span class="goal-track" aria-hidden="true"><span class="goal-fill" style="display:block;width:' + Math.min(100, sentToday / goal * 100) + '%"></span></span>';
+
     var labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     document.getElementById("summary").innerHTML =
       '<div class="summary-stat"><span class="num">' + (perDay[today] || 0) + '</span><span class="lbl">Sent today</span></div>' +
       '<div class="summary-stat"><span class="num">' + thisWeek + '</span><span class="lbl">This week</span></div>' +
       '<div class="summary-stat"><span class="num">' + lastWeek + '</span><span class="lbl">Last week</span></div>' +
       '<div class="summary-days">' + days.map(function (d, i) {
-        var cls = d === today ? " today" : d > today ? " future" : "";
-        return '<div class="summary-day' + cls + '" title="' + fmtDate(d) + '">' + labels[i] + '<b>' + (perDay[d] || 0) + '</b></div>';
+        var cls = (d === today ? " today" : d > today ? " future" : "") + (goal && (perDay[d] || 0) >= goal ? " met" : "");
+        return '<div class="summary-day' + cls + '" title="' + fmtDate(d) + (goal && (perDay[d] || 0) >= goal ? " \u2014 goal reached" : "") + '">' + labels[i] + '<b>' + (perDay[d] || 0) + '</b></div>';
       }).join("") + '</div>';
   }
 
@@ -864,10 +1036,9 @@
   function renderTabs() {
     var html = PAGE_ORDER.map(function (key) {
       var page = PAGES[key];
-      var n = state.apps.filter(page.match).length;
+      var count = page.statuses ? '<span class="n">(' + state.apps.filter(page.match).length + ')</span>' : "";
       var active = state.activePage === key ? " active" : "";
-      return '<button class="page-tab' + active + '" data-page="' + key + '" type="button">' +
-        page.label + '<span class="n">(' + n + ')</span></button>';
+      return '<button class="page-tab' + active + '" data-page="' + key + '" type="button">' + page.label + count + '</button>';
     }).join("");
     document.getElementById("pageTabs").innerHTML = html;
 
@@ -876,84 +1047,6 @@
         state.activePage = el.getAttribute("data-page");
         state.filterStatus = ""; // status options differ per page
         renderAll();
-      });
-    });
-  }
-
-  function loadToApplyOrder() {
-    try {
-      var order = JSON.parse(localStorage.getItem("toApplyOrder:" + currentUser.id) || "[]");
-      return Array.isArray(order) ? order.filter(function (id) { return typeof id === "string"; }) : [];
-    } catch (e) { return []; }
-  }
-
-  function reorderToApply(sourceId, targetId, after) {
-    var visible = getFiltered().map(function (a) { return a.id; });
-    if (sourceId === targetId || visible.indexOf(sourceId) === -1 || visible.indexOf(targetId) === -1) return;
-    // Keep filtered-out jobs in their existing slots.
-    var saved = loadToApplyOrder();
-    var all = state.apps.filter(PAGES.toApply.match).map(function (a) { return a.id; });
-    var order = saved.filter(function (id) { return all.indexOf(id) !== -1; });
-    all.forEach(function (id) { if (order.indexOf(id) === -1) order.push(id); });
-    visible.splice(visible.indexOf(sourceId), 1);
-    visible.splice(visible.indexOf(targetId) + (after ? 1 : 0), 0, sourceId);
-    var index = 0;
-    order = order.map(function (id) { return visible.indexOf(id) !== -1 ? visible[index++] : id; });
-    try {
-      localStorage.setItem("toApplyOrder:" + currentUser.id, JSON.stringify(order));
-    } catch (e) {
-      alert("Could not save the order in this browser. Please allow site storage and try again.");
-      return;
-    }
-    state.sortBy = "manual";
-    document.getElementById("sortBy").value = "manual";
-    renderTable();
-  }
-
-  function wireReordering(tbody) {
-    var draggedId = null;
-    function clearDrop() {
-      Array.prototype.forEach.call(tbody.querySelectorAll("tr"), function (row) {
-        row.classList.remove("drop-before", "drop-after");
-      });
-    }
-    Array.prototype.forEach.call(tbody.querySelectorAll(".drag-handle"), function (handle) {
-      handle.addEventListener("dragstart", function (event) {
-        draggedId = handle.closest("tr").getAttribute("data-id");
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", draggedId);
-      });
-      handle.addEventListener("dragend", function () { draggedId = null; clearDrop(); });
-      handle.addEventListener("keydown", function (event) {
-        if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
-        event.preventDefault();
-        var id = handle.closest("tr").getAttribute("data-id");
-        var ids = getFiltered().map(function (a) { return a.id; });
-        var down = event.key === "ArrowDown";
-        var target = ids[ids.indexOf(id) + (down ? 1 : -1)];
-        if (!target) return;
-        reorderToApply(id, target, down);
-        var row = Array.prototype.find.call(tbody.querySelectorAll("tr"), function (r) { return r.getAttribute("data-id") === id; });
-        if (row) row.querySelector(".drag-handle").focus();
-      });
-    });
-    Array.prototype.forEach.call(tbody.querySelectorAll("tr"), function (row) {
-      row.addEventListener("dragover", function (event) {
-        if (!draggedId) return;
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-        clearDrop();
-        var rect = row.getBoundingClientRect();
-        row.classList.add(event.clientY > rect.top + rect.height / 2 ? "drop-after" : "drop-before");
-      });
-      row.addEventListener("drop", function (event) {
-        if (!draggedId) return;
-        event.preventDefault();
-        var rect = row.getBoundingClientRect();
-        var id = draggedId;
-        draggedId = null;
-        clearDrop();
-        reorderToApply(id, row.getAttribute("data-id"), event.clientY > rect.top + rect.height / 2);
       });
     });
   }
@@ -973,12 +1066,7 @@
 
   function getFiltered() {
     var list = state.apps.filter(function (a) { return matchesFilters(a, false); });
-    var manualOrder = state.activePage === "toApply" && state.sortBy === "manual" ? loadToApplyOrder() : null;
     list.sort(function (a, b) {
-      if (manualOrder) {
-        var ai = manualOrder.indexOf(a.id), bi = manualOrder.indexOf(b.id);
-        return (ai === -1 ? manualOrder.length : ai) - (bi === -1 ? manualOrder.length : bi);
-      }
       if (state.sortBy === "dateAsc") return (a.dateApplied || "").localeCompare(b.dateApplied || "");
       if (state.sortBy === "company") return (a.company || "").localeCompare(b.company || "");
       if (state.sortBy === "nextAction") return (a.nextActionDate || "9999").localeCompare(b.nextActionDate || "9999");
@@ -1073,7 +1161,23 @@
     sel.value = current;
   }
 
-  function rowHtml(a) {
+  function rejectNoteHtml(a) {
+    if (a.status !== "Rejected") return "";
+    return '<div class="reject-note">at ' + escapeHtml(a.rejectedStage || "Resume") +
+      (a.rejectedDate ? " \u00b7 " + fmtDate(a.rejectedDate) : "") + '</div>';
+  }
+
+  // Fill in rejection details when a job moves to Rejected from another status.
+  function withStatus(app, status) {
+    var updated = Object.assign({}, app, { status: status });
+    if (status === "Rejected" && app.status !== "Rejected") {
+      updated.rejectedDate = todayIso();
+      updated.rejectedStage = STAGE_FROM_STATUS[app.status] || "Resume";
+    }
+    return updated;
+  }
+
+  function rowHtml(a, rowClass) {
     var meta = STATUS_META[a.status] || STATUS_META.Applied;
     var statusOptions = STATUS_ORDER.map(function (s) {
       return '<option value="' + s + '"' + (s === a.status ? " selected" : "") + '>' + s + "</option>";
@@ -1090,14 +1194,13 @@
       ? '<button type="button" class="job-note" aria-expanded="false" title="Expand note"><span aria-hidden="true">&#128221;</span><span class="job-note-text">' + escapeHtml(notes) + '</span></button>'
       : "";
 
-    return '<tr data-id="' + a.id + '">' +
-      (a.status === "To Apply" ? '<td class="drag-column"><button type="button" class="btn-ghost drag-handle" draggable="true" aria-label="Reorder ' + escapeHtml(a.company) + '" title="Drag to reorder, or use Up and Down arrow keys">&#8942;&#8942;</button></td>' : '') +
+    return '<tr data-id="' + a.id + '"' + (rowClass ? ' class="' + rowClass + '"' : '') + '>' +
       '<td class="company-cell"><div class="company">' + escapeHtml(a.company) + '</div><div class="role">' + escapeHtml(a.role) + roleTagHtml(a) + '</div>' + noteHtml + '</td>' +
       '<td>' + escapeHtml(a.region) + '</td>' +
       '<td>' + (a.jobType ? escapeHtml(a.jobType) : '<span class="muted">\u2014</span>') + '</td>' +
       '<td class="nowrap">' + prioritySelect(a) + '</td>' +
       '<td class="nowrap">' + fmtDate(a.dateApplied) + '</td>' +
-      '<td><select class="status-select" style="background:var(--' + meta.color + '-bg);color:var(--' + meta.color + ')" data-id="' + a.id + '">' + statusOptions + '</select></td>' +
+      '<td><select class="status-select" style="background:var(--' + meta.color + '-bg);color:var(--' + meta.color + ')" data-id="' + a.id + '">' + statusOptions + '</select>' + rejectNoteHtml(a) + '</td>' +
       '<td>' + nextAction + '</td>' +
       '<td class="nowrap">' + linkCell + '</td>' +
       '<td class="actions-cell nowrap"><div class="row-actions">' +
@@ -1139,11 +1242,7 @@
       sel.addEventListener("change", function () {
         var id = sel.getAttribute("data-id");
         var app = state.apps.find(function (x) { return x.id === id; });
-        if (app) {
-          var updated = Object.assign({}, app, { status: sel.value });
-          if (app.status === "To Apply" && countsAsSent(sel.value)) updated.dateApplied = todayIso(); // sent now
-          persistUpsert(updated);
-        }
+        if (app) persistUpsert(withStatus(app, sel.value));
       });
     });
     Array.prototype.forEach.call(tbody.querySelectorAll("[data-edit]"), function (btn) {
@@ -1171,17 +1270,23 @@
       return;
     }
     empty.style.display = "none";
-    tbody.innerHTML = list.map(rowHtml).join("");
+    // On the Applied tab, switch tint whenever the applied date changes from the row above.
+    var alt = false;
+    tbody.innerHTML = list.map(function (a, i) {
+      if (state.activePage !== "applied") return rowHtml(a, "");
+      if (i && a.dateApplied !== list[i - 1].dateApplied) alt = !alt;
+      return rowHtml(a, alt ? "day-alt" : "");
+    }).join("");
     wireRowEvents(tbody);
-    if (tbodyId === "tbodyToApply") wireReordering(tbody);
   }
 
   function renderTable() {
-    var isToApply = state.activePage === "toApply";
-    document.getElementById("manualSortOption").hidden = !isToApply;
-    document.getElementById("sortBy").value = !isToApply && state.sortBy === "manual" ? "dateDesc" : state.sortBy;
-    document.getElementById("pageToApply").style.display = isToApply ? "block" : "none";
-    document.getElementById("pageList").style.display = isToApply ? "none" : "block";
+    var isOverview = state.activePage === "overview";
+    document.getElementById("pageOverview").style.display = isOverview ? "" : "none";
+    document.getElementById("listToolbar").style.display = isOverview ? "none" : "";
+    document.getElementById("pageList").style.display = isOverview ? "none" : "";
+    if (isOverview) return;
+    document.getElementById("sortBy").value = state.sortBy;
     renderStatusFilter();
 
     var list = getFiltered();
@@ -1190,11 +1295,7 @@
 
     var empty = state.apps.length ? PAGES[state.activePage].empty
       : "No applications yet \u2014 click \u201c+ Add Application\u201d to log your first one.";
-    if (isToApply) {
-      renderSection(list, "tbodyToApply", "emptyToApply", empty);
-    } else {
-      renderSection(list, "tbodyList", "emptyList", empty);
-    }
+    renderSection(list, "tbodyList", "emptyList", empty);
   }
 
   // Only pages that group several statuses get a status filter.
@@ -1246,8 +1347,147 @@
     sel.value = state.filterCategory;
   }
 
+  // ---- overview dashboard ----
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function shortDate(d) { return MONTHS[d.getMonth()] + " " + d.getDate(); }
+  function pct(n, total) { return total ? Math.round(n / total * 100) + "%" : "\u2014"; }
+  function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+
+  // Buckets for the time chart, oldest first: { start: iso, label, title }.
+  function timeBuckets(scale) {
+    var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var buckets = [];
+    if (scale === "day") {
+      for (var i = 29; i >= 0; i--) {
+        var d = addDays(today, -i);
+        buckets.push({ start: isoDate(d), label: i % 5 === 0 ? shortDate(d) : "", title: fmtDate(isoDate(d)) });
+      }
+    } else if (scale === "week") {
+      var monday = addDays(today, -((today.getDay() + 6) % 7));
+      for (var w = 11; w >= 0; w--) {
+        var m = addDays(monday, -7 * w);
+        buckets.push({ start: isoDate(m), label: w % 2 === 0 ? shortDate(m) : "", title: "Week of " + fmtDate(isoDate(m)) });
+      }
+    } else {
+      for (var k = 11; k >= 0; k--) {
+        var first = new Date(today.getFullYear(), today.getMonth() - k, 1);
+        var name = MONTHS[first.getMonth()];
+        buckets.push({ start: isoDate(first), label: first.getMonth() === 0 || k === 11 ? name + " \u2019" + String(first.getFullYear()).slice(2) : name, title: name + " " + first.getFullYear() });
+      }
+    }
+    return buckets;
+  }
+
+  function renderTimeChart(sent) {
+    var scale = state.timeScale;
+    var buckets = timeBuckets(scale);
+    var counts = buckets.map(function () { return 0; });
+    sent.forEach(function (a) {
+      if (!a.dateApplied || a.dateApplied < buckets[0].start || a.dateApplied > todayIso()) return;
+      for (var i = buckets.length - 1; i >= 0; i--) {
+        if (a.dateApplied >= buckets[i].start) { counts[i]++; break; }
+      }
+    });
+    var max = Math.max.apply(null, counts.concat([1]));
+    var total = counts.reduce(function (sum, n) { return sum + n; }, 0);
+    var span = { day: "last 30 days", week: "last 12 weeks", month: "last 12 months" }[scale];
+    var unit = { day: "day", week: "week", month: "month" }[scale];
+    document.getElementById("timeHint").textContent =
+      plural(total, "application") + " in the " + span + " \u00b7 " + (Math.round(total / buckets.length * 10) / 10) + " per " + unit + " on average";
+    var showValues = buckets.length <= 12;
+    document.getElementById("timeChart").innerHTML =
+      '<div class="vchart">' + buckets.map(function (b, i) {
+        var h = counts[i] ? Math.max(3, Math.round(counts[i] / max * 150)) : 0;
+        var current = i === buckets.length - 1 ? " current" : "";
+        return '<div class="vcol' + current + '" title="' + escapeHtml(b.title) + ": " + plural(counts[i], "application") + (current ? " so far" : "") + '">' +
+          (showValues && counts[i] ? '<span class="val">' + counts[i] + '</span>' : '') +
+          '<div class="bar" style="height:' + h + 'px"></div></div>';
+      }).join("") + '</div>' +
+      '<div class="vaxis" aria-hidden="true">' + buckets.map(function (b) { return '<span>' + escapeHtml(b.label) + '</span>'; }).join("") + '</div>';
+    Array.prototype.forEach.call(document.querySelectorAll("#timeScale button"), function (btn) {
+      btn.setAttribute("aria-pressed", String(btn.getAttribute("data-scale") === scale));
+    });
+  }
+
+  // rows: [{ label, count, total?, title?, status? }]; bar length is count / total.
+  function hbarsHtml(rows, total) {
+    if (!total) return '<div class="dash-empty">Nothing to show yet.</div>';
+    return '<div class="hbars">' + rows.map(function (r) {
+      var tag = r.status ? 'button type="button" data-status="' + escapeHtml(r.status) + '"' : "div";
+      var width = Math.round(r.count / total * 100);
+      return '<' + tag + ' class="hbar" title="' + escapeHtml(r.title || r.label + ": " + plural(r.count, "application")) + '">' +
+        '<span class="lbl">' + escapeHtml(r.label) + '</span>' +
+        '<span class="track"><span class="fill" style="display:block;width:' + width + '%"></span></span>' +
+        '<span class="num"><b>' + r.count + '</b> \u00b7 ' + pct(r.count, total) + '</span>' +
+      '</' + (r.status ? "button" : "div") + '>';
+    }).join("") + '</div>';
+  }
+
+  function countBy(list, keyFn) {
+    var counts = {};
+    list.forEach(function (a) { var k = keyFn(a); counts[k] = (counts[k] || 0) + 1; });
+    return Object.keys(counts).sort(function (x, y) { return counts[y] - counts[x] || x.localeCompare(y); })
+      .map(function (k) { return { label: k, count: counts[k] }; });
+  }
+
+  // How far an application got: 0 applied, 1 screening, 2 assessment, 3 interview, 4 offer.
+  function stageReached(a) {
+    if (a.status === "Rejected") return Math.max(0, REJECT_STAGES.indexOf(a.rejectedStage || "Resume"));
+    return { Applied: 0, Screening: 1, Assessment: 2, Interview: 3, Offer: 4 }[a.status] || 0;
+  }
+
+  function renderDashboard() {
+    var sent = state.apps.filter(function (a) { return countsAsSent(a.status); });
+    renderTimeChart(sent);
+
+    document.getElementById("byStatus").innerHTML = hbarsHtml(STATUS_ORDER.filter(countsAsSent).map(function (st) {
+      return { label: st, status: st, count: sent.filter(function (a) { return a.status === st; }).length };
+    }), sent.length);
+    document.getElementById("byRegion").innerHTML = hbarsHtml(countBy(sent, function (a) { return a.region || "Other"; }), sent.length);
+    document.getElementById("byCategory").innerHTML = hbarsHtml(countBy(sent, function (a) { return effectiveCategory(a) || "Untagged"; }), sent.length);
+
+    // Conversion leaves out the last week's applications, which mostly haven't had a reply yet.
+    var cutoff = isoDate(addDays(new Date(), -7));
+    var settled = sent.filter(function (a) { return a.dateApplied && a.dateApplied <= cutoff; });
+    var recent = sent.filter(function (a) { return a.dateApplied && a.dateApplied > cutoff; }).length;
+    var steps = [["Applied", 0], ["Screening", 1], ["Assessment", 2], ["Interview", 3], ["Offer", 4]].map(function (step) {
+      return { label: step[0], count: settled.filter(function (a) { return stageReached(a) >= step[1]; }).length };
+    });
+    steps.forEach(function (step, i) {
+      step.title = step.label + ": " + plural(step.count, "application") +
+        (i ? " (" + pct(step.count, steps[i - 1].count) + " of the step before)" : "");
+    });
+    document.getElementById("funnelHint").textContent =
+      "Share of applications that got at least this far. Based on " + plural(settled.length, "application") +
+      " sent on or before " + fmtDate(cutoff) + (recent ? "; " + recent + " newer " + (recent === 1 ? "one isn\u2019t" : "ones aren\u2019t") + " counted yet." : ".");
+    var n = settled.length;
+    document.getElementById("funnel").innerHTML = (n ?
+      '<div class="funnel-rates">' +
+        '<div class="summary-stat"><span class="num">' + pct(steps[1].count, n) + '</span><span class="lbl">Response rate</span></div>' +
+        '<div class="summary-stat"><span class="num">' + pct(steps[3].count, n) + '</span><span class="lbl">Interview rate</span></div>' +
+        '<div class="summary-stat"><span class="num">' + pct(steps[4].count, n) + '</span><span class="lbl">Offer rate</span></div>' +
+      '</div>' : '') + hbarsHtml(steps, n);
+
+    var rejected = sent.filter(function (a) { return a.status === "Rejected"; });
+    document.getElementById("rejectStages").innerHTML = hbarsHtml(REJECT_STAGES.map(function (stage) {
+      return { label: stage, count: rejected.filter(function (a) { return (a.rejectedStage || "Resume") === stage; }).length };
+    }), rejected.length);
+
+    Array.prototype.forEach.call(document.querySelectorAll("#byStatus [data-status]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var status = btn.getAttribute("data-status");
+        state.activePage = PAGE_ORDER.find(function (key) { return PAGES[key].statuses && PAGES[key].statuses.indexOf(status) !== -1; });
+        state.filterStatus = PAGES[state.activePage].statuses.length > 1 ? status : "";
+        renderAll();
+      });
+    });
+  }
+
   function renderAll() {
     renderSummary();
+    renderDashboard();
     renderCategoryFilter();
     renderSourceFilter();
     renderTabs();
@@ -1286,15 +1526,14 @@
     }
   }
 
-  // One date field: "added" while a job is To Apply, "applied" once it's sent.
-  function syncDateField() {
-    var status = document.getElementById("fStatus").value;
-    var dateEl = document.getElementById("fDateApplied");
-    document.getElementById("fDateAppliedLabel").textContent = status === "To Apply" ? "Date added" : "Date applied";
-    var orig = state.modalOrig;
-    if (!orig || orig.status !== "To Apply") return;
-    if (countsAsSent(status) && dateEl.value === orig.date) dateEl.value = todayIso(); // just sent
-    else if (!countsAsSent(status) && dateEl.value === todayIso()) dateEl.value = orig.date; // changed mind
+  function syncRejectedFields() {
+    var rejected = document.getElementById("fStatus").value === "Rejected";
+    document.getElementById("rejectedFields").hidden = !rejected;
+    var dateEl = document.getElementById("fRejectedDate");
+    if (rejected && state.modalOrigStatus !== "Rejected" && !dateEl.value) {
+      dateEl.value = todayIso();
+      document.getElementById("fRejectedStage").value = STAGE_FROM_STATUS[state.modalOrigStatus] || "Resume";
+    }
   }
 
   function openModal(id) {
@@ -1308,14 +1547,16 @@
     updateCategoryOptions(app ? (app.category || "") : "");
     document.getElementById("fRegion").value = app ? app.region : "Germany";
     document.getElementById("fJobType").value = app ? (app.jobType || "") : "Full-time";
-    document.getElementById("fStatus").value = app ? app.status : "To Apply";
-    state.modalOrig = app ? { status: app.status, date: app.dateApplied || "" } : null;
+    document.getElementById("fStatus").value = app ? app.status : "Applied";
     var savedPriority = app && app.priority;
     var legacyPriorities = { "Tier 1": "1 - Important", "Tier 2": "2 - Medium", "Tier 3": "3 - Low" };
     document.getElementById("fPriority").value = legacyPriorities[savedPriority] || savedPriority || "3 - Low";
     document.getElementById("fDateApplied").value = app ? app.dateApplied : todayIso();
+    state.modalOrigStatus = app ? app.status : "Applied";
+    document.getElementById("fRejectedDate").value = app ? (app.rejectedDate || "") : "";
+    document.getElementById("fRejectedStage").value = app && app.rejectedStage || "Resume";
+    syncRejectedFields();
     document.getElementById("fNextActionDate").value = app ? (app.nextActionDate || "") : "";
-    syncDateField();
     document.getElementById("fNextAction").value = app ? (app.nextAction || "") : "";
     document.getElementById("fLink").value = app ? (app.link || "") : "";
     state.sourceTouchedByUser = !!(app && app.source);
@@ -1325,8 +1566,11 @@
     document.getElementById("fNotes").value = app ? (app.notes || "") : "";
     updatePriorityHint();
 
+    state.autofilled = { company: "", role: "" };
+    document.getElementById("linkHint").textContent = "";
+
     document.getElementById("modalBackdrop").style.display = "flex";
-    document.getElementById("fCompany").focus();
+    document.getElementById(app ? "fCompany" : "fLink").focus();
   }
 
   function closeModal() {
@@ -1338,6 +1582,7 @@
     document.getElementById("sTier1Companies").value = joinList(state.settings.tier1Companies);
     document.getElementById("sTier2Companies").value = joinList(state.settings.tier2Companies);
     document.getElementById("sTier1Keywords").value = joinList(state.settings.tier1Keywords);
+    document.getElementById("sDailyGoal").value = state.settings.dailyGoal;
     document.getElementById("settingsBackdrop").style.display = "flex";
   }
 
@@ -1345,22 +1590,40 @@
     document.getElementById("settingsBackdrop").style.display = "none";
   }
 
+  // Whole number 0-100 from the settings box, or null (after telling the user) if it isn't one.
+  function readDailyGoal() {
+    var raw = document.getElementById("sDailyGoal").value.trim();
+    var goal = raw === "" ? 0 : Number(raw);
+    if (!Number.isInteger(goal) || goal < 0 || goal > 100) {
+      alert("Please enter a daily goal between 0 and 100.");
+      return null;
+    }
+    return goal;
+  }
+
   async function handleSaveSettings() {
     var t1c = parseList(document.getElementById("sTier1Companies").value);
     var t2c = parseList(document.getElementById("sTier2Companies").value);
     var t1k = parseList(document.getElementById("sTier1Keywords").value);
-    var ok = await saveSettings(t1c, t2c, t1k);
+    var goal = readDailyGoal();
+    if (goal === null) return;
+    var ok = await saveSettings(t1c, t2c, t1k, goal);
+    if (ok) renderSummary();
     if (ok) closeSettingsModal();
   }
 
   async function handleBackfillPriorities() {
     // Use what's currently in the boxes, so unsaved edits aren't silently ignored.
+    var goal = readDailyGoal();
+    if (goal === null) return;
     var saved = await saveSettings(
       parseList(document.getElementById("sTier1Companies").value),
       parseList(document.getElementById("sTier2Companies").value),
-      parseList(document.getElementById("sTier1Keywords").value)
+      parseList(document.getElementById("sTier1Keywords").value),
+      goal
     );
     if (!saved) return;
+    renderSummary();
     var hasAnySettings = state.settings.tier1Companies.length || state.settings.tier2Companies.length || state.settings.tier1Keywords.length;
     if (!hasAnySettings) {
       alert("Add at least one company or title keyword first, so there's something to match against.");
@@ -1412,6 +1675,8 @@
       status: document.getElementById("fStatus").value,
       priority: document.getElementById("fPriority").value,
       dateApplied: document.getElementById("fDateApplied").value,
+      rejectedDate: document.getElementById("fRejectedDate").value,
+      rejectedStage: document.getElementById("fRejectedStage").value,
       nextActionDate: document.getElementById("fNextActionDate").value,
       nextAction: document.getElementById("fNextAction").value.trim(),
       link: document.getElementById("fLink").value.trim(),
@@ -1432,7 +1697,7 @@
   }
 
   function toCsv() {
-    var cols = ["company", "role", "region", "jobType", "status", "priority", "dateApplied", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
+    var cols = ["company", "role", "region", "jobType", "status", "priority", "dateApplied", "rejectedDate", "rejectedStage", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
     var header = cols.join(",");
     var rows = state.apps.map(function (a) {
       return cols.map(function (c) {
@@ -1477,7 +1742,7 @@
     if (rows.length === 0) return [];
 
     var header = rows[0].map(function (h) { return h.trim(); });
-    var expected = ["company", "role", "region", "jobType", "status", "priority", "dateApplied", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
+    var expected = ["company", "role", "region", "jobType", "status", "priority", "dateApplied", "rejectedDate", "rejectedStage", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
     var idx = {};
     expected.forEach(function (key) {
       var pos = header.indexOf(key);
@@ -1551,8 +1816,9 @@
     document.getElementById("fCompany").addEventListener("input", updatePriorityHint);
     document.getElementById("fRole").addEventListener("input", updatePriorityHint);
     document.getElementById("fRole").addEventListener("input", function () { updateCategoryOptions(); });
-    document.getElementById("fStatus").addEventListener("change", syncDateField);
+    document.getElementById("fStatus").addEventListener("change", syncRejectedFields);
     document.getElementById("fLink").addEventListener("input", updateSourceHint);
+    document.getElementById("fLink").addEventListener("input", autofillFromLink);
     document.getElementById("fSource").addEventListener("change", function () {
       state.sourceTouchedByUser = true;
       updateSourceHint();
@@ -1595,6 +1861,12 @@
     document.getElementById("sortBy").addEventListener("change", function (e) {
       state.sortBy = e.target.value;
       renderAll();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#timeScale button"), function (btn) {
+      btn.addEventListener("click", function () {
+        state.timeScale = btn.getAttribute("data-scale");
+        renderDashboard();
+      });
     });
     document.getElementById("exportBtn").addEventListener("click", handleExport);
     document.getElementById("importBtn").addEventListener("click", function () {

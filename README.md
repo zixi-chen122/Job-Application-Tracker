@@ -10,8 +10,10 @@ step, one HTML file.
 - **Add, edit, and delete applications** with company, role, region, status,
   dates, next-action reminders, a job posting link, referral/contact notes,
   and free-text notes.
-- **Status pipeline** — Applied, Screening, Interview, Offer, Rejected,
-  Withdrawn — shown as clickable stat cards that double as filters.
+- **Status pipeline** — Applied, Screening, Assessment, Interview, Offer,
+  Rejected, Withdrawn — with the date and stage of each rejection.
+- **Overview dashboard** — applications sent per day/week/month, breakdowns
+  by status, region and category, and conversion rates through each stage.
 - **Filter and sort** by region and by date (or by upcoming next-action
   date, to answer "what do I need to follow up on this week").
 - **CSV export and import** for backup and portability, independent of the

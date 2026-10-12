@@ -17,6 +17,8 @@ create table public.applications (
   status text not null default 'Applied',
   priority text,
   date_applied date,
+  rejected_date date,
+  rejected_stage text,
   next_action_date date,
   next_action text,
   link text,
@@ -43,6 +45,7 @@ create table public.user_settings (
   tier1_companies text not null default '',
   tier2_companies text not null default '',
   tier1_keywords text not null default '',
+  daily_goal integer not null default 10,
   updated_at timestamptz not null default now()
 );
 
