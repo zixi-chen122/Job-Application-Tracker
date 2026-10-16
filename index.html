@@ -551,13 +551,14 @@
     Withdrawn:  { color: "withdrawn" }
   };
   var STATUS_ORDER = ["Applied", "Screening", "Assessment", "Interview", "Offer", "Rejected", "Withdrawn"];
-  var PAGE_ORDER = ["overview", "applied", "inProgress", "offer", "history"];
+  var PAGE_ORDER = ["overview", "applied", "inProgress", "offer", "rejected", "withdrawn"];
   var PAGES = {
     overview:   { label: "📊 Overview",    statuses: null },
     applied:    { label: "📬 Applied",     statuses: ["Applied"],              empty: "No applications waiting on a reply." },
     inProgress: { label: "💬 In Progress", statuses: ["Screening", "Assessment", "Interview"], empty: "No screenings or interviews in progress." },
     offer:      { label: "🎉 Offer",       statuses: ["Offer"],                empty: "No offers yet \u2014 keep going." },
-    history:    { label: "🗄️ History",     statuses: ["Rejected", "Withdrawn"], empty: "No rejected or withdrawn applications." }
+    rejected:   { label: "❌ Rejected",    statuses: ["Rejected"],             empty: "No rejections \u2014 nice." },
+    withdrawn:  { label: "↩️ Withdrawn",   statuses: ["Withdrawn"],            empty: "No withdrawn applications." }
   };
   PAGE_ORDER.forEach(function (key) {
     var page = PAGES[key];
