@@ -396,6 +396,11 @@
       <input type="text" id="fCompany" placeholder="e.g. SAP" />
     </div>
     <div class="field">
+      <label for="fIndustry">Industry</label>
+      <input type="text" id="fIndustry" list="industryOptions" placeholder="e.g. Software" />
+      <datalist id="industryOptions"></datalist>
+    </div>
+    <div class="field">
       <label for="fRole">Role</label>
       <input type="text" id="fRole" placeholder="e.g. Junior AI Engineer" />
     </div>
@@ -602,6 +607,7 @@
       id: app.id && app.id.indexOf("tmp_") !== 0 ? app.id : undefined, // let DB generate on insert
       company: app.company || "",
       role: app.role || "",
+      industry: app.industry || null,
       region: app.region || "",
       job_type: app.jobType || null,
       status: app.status || "Applied",
@@ -624,6 +630,7 @@
       id: row.id,
       company: row.company || "",
       role: row.role || "",
+      industry: row.industry || "",
       region: row.region || "",
       jobType: row.job_type || "",
       status: row.status || "Applied",
@@ -1061,7 +1068,7 @@
     if (state.filterJobType && a.jobType !== state.filterJobType) return false;
     if (state.filterSource && effectiveSource(a) !== state.filterSource) return false;
     if (!skipCategory && state.filterCategory && effectiveCategory(a) !== (state.filterCategory === NO_CATEGORY ? "" : state.filterCategory)) return false;
-    if (query && ((a.company || "") + " " + (a.role || "")).toLowerCase().indexOf(query) === -1) return false;
+    if (query && ((a.company || "") + " " + (a.role || "") + " " + (a.industry || "")).toLowerCase().indexOf(query) === -1) return false;
     return true;
   }
 
@@ -1196,7 +1203,7 @@
       : "";
 
     return '<tr data-id="' + a.id + '"' + (rowClass ? ' class="' + rowClass + '"' : '') + '>' +
-      '<td class="company-cell"><div class="company">' + escapeHtml(a.company) + '</div><div class="role">' + escapeHtml(a.role) + roleTagHtml(a) + '</div>' + noteHtml + '</td>' +
+      '<td class="company-cell"><div class="company">' + escapeHtml(a.company) + (a.industry ? ' <span class="muted">\u00b7 ' + escapeHtml(a.industry) + '</span>' : '') + '</div><div class="role">' + escapeHtml(a.role) + roleTagHtml(a) + '</div>' + noteHtml + '</td>' +
       '<td>' + escapeHtml(a.region) + '</td>' +
       '<td>' + (a.jobType ? escapeHtml(a.jobType) : '<span class="muted">\u2014</span>') + '</td>' +
       '<td class="nowrap">' + prioritySelect(a) + '</td>' +
@@ -1545,6 +1552,8 @@
     document.getElementById("modalTitle").textContent = app ? "Edit Application" : "Add Application";
     document.getElementById("fCompany").value = app ? app.company : "";
     document.getElementById("fRole").value = app ? app.role : "";
+    document.getElementById("fIndustry").value = app ? (app.industry || "") : "";
+    document.getElementById("industryOptions").innerHTML = industryOptionsHtml();
     updateCategoryOptions(app ? (app.category || "") : "");
     document.getElementById("fRegion").value = app ? app.region : "Germany";
     document.getElementById("fJobType").value = app ? (app.jobType || "") : "Full-time";
@@ -1572,6 +1581,15 @@
 
     document.getElementById("modalBackdrop").style.display = "flex";
     document.getElementById(app ? "fCompany" : "fLink").focus();
+  }
+
+  // previously used industries, offered as suggestions in the form
+  function industryOptionsHtml() {
+    var seen = {};
+    state.apps.forEach(function (a) { if (a.industry) seen[a.industry] = true; });
+    return Object.keys(seen).sort().map(function (n) {
+      return '<option value="' + escapeHtml(n) + '"></option>';
+    }).join("");
   }
 
   function closeModal() {
@@ -1670,6 +1688,7 @@
     var data = {
       company: company,
       role: role,
+      industry: document.getElementById("fIndustry").value.trim(),
       category: document.getElementById("fCategory").value,
       region: document.getElementById("fRegion").value,
       jobType: document.getElementById("fJobType").value,
@@ -1698,7 +1717,7 @@
   }
 
   function toCsv() {
-    var cols = ["company", "role", "region", "jobType", "status", "priority", "dateApplied", "rejectedDate", "rejectedStage", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
+    var cols = ["company", "role", "industry", "region", "jobType", "status", "priority", "dateApplied", "rejectedDate", "rejectedStage", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
     var header = cols.join(",");
     var rows = state.apps.map(function (a) {
       return cols.map(function (c) {
@@ -1743,7 +1762,7 @@
     if (rows.length === 0) return [];
 
     var header = rows[0].map(function (h) { return h.trim(); });
-    var expected = ["company", "role", "region", "jobType", "status", "priority", "dateApplied", "rejectedDate", "rejectedStage", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
+    var expected = ["company", "role", "industry", "region", "jobType", "status", "priority", "dateApplied", "rejectedDate", "rejectedStage", "nextActionDate", "nextAction", "link", "source", "category", "contact", "notes"];
     var idx = {};
     expected.forEach(function (key) {
       var pos = header.indexOf(key);

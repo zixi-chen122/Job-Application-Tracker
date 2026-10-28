@@ -12,6 +12,7 @@ create table public.applications (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   company text not null,
   role text not null,
+  industry text,
   region text,
   job_type text,
   status text not null default 'Applied',

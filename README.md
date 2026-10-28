@@ -76,6 +76,7 @@ applies only its incremental change:
 - `002_add_job_type.sql` — adds the `job_type` column
 - `003_add_source.sql` — adds the `source` column
 - `004_add_category.sql` — adds the `category` column (manual override of the auto role tag)
+- `008_add_industry.sql` — adds the `industry` column
 - `003_remove_resume_and_cover_letter.sql` — drops `resume_version` and
   `cover_letter`, which turned out not to be useful in practice
 
